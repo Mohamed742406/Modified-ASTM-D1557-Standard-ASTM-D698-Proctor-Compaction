@@ -1,0 +1,4105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بروكتور - Proctor Tests ASTM D1557 / D698</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<style>
+  :root {
+    --navy:#14213d; --blue:#1d4e89; --green:#1f8a5f; --gold:#c98a1f;
+    --bg:#f4f6f9; --thead:#e6ecf5; --zebra:#f6f8fb; --border:#ccd6e4;
+    --border2:#d9e1ec; --muted:#5b7a9d; --lightgreen:#eef7f1;
+  }
+  body.theme-2 {
+    --navy:#24313f; --blue:#2a6f77; --green:#0e8a6d; --gold:#b6752d;
+    --bg:#f3f5f4; --thead:#e3ecec; --zebra:#f5f8f8; --border:#cfd8d6;
+    --border2:#d6dfdd; --muted:#5f7a78; --lightgreen:#e9f5ef;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; padding:0; font-family: 'Tahoma','Segoe UI',sans-serif;
+    background:var(--bg); color:var(--navy); direction: rtl;
+  }
+  .topbar { background:var(--navy); padding:8px 6px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+  .tab {
+    background:var(--blue); color:#fff; border:none; border-radius:14px;
+    padding:6px 12px; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+  .tab.active { background:var(--green); font-weight:bold; }
+  .container { max-width:560px; margin:10px auto; padding:0 4px; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  h2.title { text-align:center; color:var(--navy); margin:10px 0 4px; font-size:18px; }
+  .subtitle { text-align:center; color:var(--muted); font-size:11.5px; margin:0 0 10px; }
+  table {
+    width:100%; border-collapse:collapse; background:#fff; margin-bottom:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.15); border-radius:6px;
+  }
+  .table-scroll { overflow-x:auto; margin-bottom:14px; }
+  th, td { border:1px solid var(--border2); padding:6px 2px; text-align:center; font-size:12px; }
+  thead th {
+    background:var(--navy); color:#fff; font-size:12.5px; padding:8px 4px;
+  }
+  thead th.headlabel { background:var(--blue); }
+  tbody tr:nth-child(even) { background:var(--zebra); }
+  tbody th {
+    background:var(--thead); color:var(--navy); font-weight:bold; font-size:11.5px;
+    text-align:right; padding-right:6px; width:34%;
+  }
+  input.cell {
+    width:100%; border:1px solid var(--border); border-radius:4px; padding:4px 2px;
+    text-align:center; font-size:12px; background:#fffdf5;
+  }
+  td.calc { background:#eef8ee; font-weight:bold; color:#1b5e20; padding:6px 2px; font-size:12.5px; min-width:58px; white-space:nowrap; }
+  .btnrow { display:flex; gap:10px; margin:12px 0; }
+  .btn {
+    flex:1; border:none; border-radius:20px; padding:10px 0; font-size:14px;
+    font-weight:bold; cursor:pointer; color:#fff;
+  }
+  .btn.reset { background:var(--gold); }
+  .btn.calc { background:var(--navy); }
+  .btn.demo { background:var(--green); }
+  .constants { display:flex; gap:8px; margin-bottom:10px; }
+  .constants label { font-size:12px; flex:1; }
+  .constants input { width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); text-align:center;}
+  .constants select { width:100%; padding:6px; border-radius:6px; border:1px solid var(--border); text-align:center; background:#fffdf5; font-size:12px;}
+  .chartwrap { background:#fff; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.15); padding:10px 6px 4px; }
+  canvas { max-width:100%; }
+  .legend { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:8px 0 2px; font-size:11px; }
+  .legend span.sw { display:inline-block; width:14px; height:3px; margin-left:4px; vertical-align:middle; }
+  .legend span.sw.dashed { background:transparent; height:0; border-top:2px dashed var(--muted); }
+  .resultbox {
+    background:var(--navy); color:#fff; text-align:center; padding:10px; border-radius:8px;
+    margin-top:10px; font-size:14px; font-weight:bold;
+  }
+  .astm {
+    text-align:center; background:#fff; border:2px solid var(--navy); border-radius:8px;
+    padding:8px; margin-top:8px; font-weight:bold; color:var(--navy);
+  }
+  .reportinfo {
+    background:#fff; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.15);
+    padding:8px; margin-bottom:12px; display:grid; grid-template-columns:1fr 1fr; gap:6px;
+  }
+  .reportinfo label { font-size:11px; color:var(--navy); display:block; }
+  .reportinfo input {
+    width:100%; margin-top:2px; padding:5px 4px; border-radius:5px; border:1px solid var(--border);
+    font-size:12px; text-align:center; background:#fffdf5;
+  }
+  .footer-brand {
+    text-align:center; color:var(--muted); font-size:11px; margin:16px 0 8px; padding-top:8px;
+    border-top:1px solid var(--border2);
+  }
+  #scrollTopBtn {
+    display:none; position:fixed; bottom:20px; right:20px; z-index:500;
+    width:46px; height:46px; border-radius:50%; background:var(--navy); color:#fff;
+    border:none; font-size:20px; font-weight:bold; box-shadow:0 3px 10px rgba(0,0,0,.3); cursor:pointer;
+  }
+  .warn { color:#c0392b; font-size:11px; text-align:center; margin-top:4px; display:none; }
+  @media print {
+    .topbar, .btnrow, .warn, #scrollTopBtn { display:none !important; }
+    body { background:#fff; }
+    .container { max-width:100%; margin:0; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .chartwrap, table, .reportinfo, .resultbox, .astm { box-shadow:none; break-inside:avoid; }
+    @page { size:A4; margin:10mm; }
+  }
+
+  /* ===== Professional Report Overlay (Modified Proctor D1557) ===== */
+  .report-overlay {
+    display:none; position:fixed; inset:0; background:#e5e9ef; z-index:1000;
+    overflow-y:auto; padding:14px;
+  }
+  .report-page {
+    max-width:900px; margin:0 auto; background:#fff; padding:10px 14px 12px;
+    border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.25); direction:ltr; text-align:left;
+    font-family:'Tahoma','Segoe UI',sans-serif; color:var(--navy); font-size:10px; line-height:1.25;
+  }
+  .rep-header { display:flex; align-items:stretch; gap:10px; border-bottom:2px solid var(--navy); padding-bottom:6px; margin-bottom:6px; }
+  .rep-header .rep-flag {
+    width:10px; background:linear-gradient(var(--blue),var(--navy)); border-radius:3px; flex-shrink:0;
+  }
+  .rep-header .rep-titles { flex:1; }
+  .rep-header h1 { margin:0; font-size:16px; color:var(--navy); letter-spacing:0.3px; }
+  .rep-header h2 { margin:1px 0 0; font-size:11px; color:var(--blue); font-weight:bold; }
+  .rep-headerbox {
+    border:1px solid var(--border); border-radius:4px; font-size:9px; padding:4px 8px; min-width:190px;
+  }
+  .rep-headerbox div { display:flex; justify-content:space-between; gap:8px; padding:0.5px 0; }
+  .rep-headerbox b { color:var(--navy); }
+  .rep-grid { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:6px; margin-bottom:6px; }
+  .rep-box { border:1px solid var(--border); border-radius:4px; overflow:hidden; font-size:9px; }
+  .rep-box h3 {
+    background:var(--navy); color:#fff; margin:0; padding:3px 6px; font-size:9px; letter-spacing:0.2px;
+  }
+  .rep-box .rep-box-body { padding:3px 6px; }
+  .rep-box .rep-row { display:flex; gap:4px; padding:1px 0; }
+  .rep-box .rep-row .rep-label { flex:0 0 46%; color:#345; font-weight:bold; }
+  .rep-box .rep-row .rep-sep { flex:0 0 6px; }
+  .rep-box .rep-row .rep-value { flex:1; word-break:break-word; }
+  .rep-box.results .rep-box-body { background:var(--lightgreen); }
+  .rep-col-span2 { grid-row: span 2; }
+  .rep-table { width:100%; border-collapse:collapse; font-size:8.5px; margin-bottom:6px; }
+  .rep-table caption {
+    background:var(--navy); color:#fff; padding:3px 0; font-weight:bold; font-size:9px; caption-side:top;
+  }
+  .rep-table th, .rep-table td { border:1px solid var(--border); padding:2px 3px; text-align:center; }
+  .rep-table thead th { background:var(--thead); color:var(--navy); }
+  .rep-table tbody tr:nth-child(even) { background:var(--zebra); }
+  .rep-chart-row { display:flex; gap:14px; align-items:center; justify-content:center; overflow:hidden; }
+  .rep-chart-row img { flex:0 0 auto; min-width:0; max-width:72%; max-height:250px; width:auto; height:auto; object-fit:contain; border:1px solid var(--border); border-radius:4px; }
+  .rep-mdd-box {
+    border:2px solid var(--navy); border-radius:5px; padding:8px 12px; font-size:12px; font-weight:bold;
+    min-width:140px; text-align:center; color:var(--navy); align-self:center; flex:0 0 auto; white-space:nowrap;
+  }
+  .rep-notes { font-size:9px; border-top:1px solid var(--border); padding-top:4px; margin-bottom:6px; }
+  .rep-sign { display:flex; justify-content:space-between; gap:8px; font-size:9px; margin-top:10px; }
+  .rep-sign div { flex:1; border-top:1px solid var(--navy); padding-top:3px; text-align:center; }
+  .rep-actions { max-width:900px; margin:14px auto 0; display:flex; gap:10px; }
+  @media print {
+    body.report-mode .topbar, body.report-mode .container { display:none !important; }
+    body.report-mode .report-overlay { position:static !important; background:#fff !important; padding:0 !important; overflow:visible !important; }
+    body.report-mode .report-page, body.report-mode .t2-page, body.report-mode .t3-page, body.report-mode .t4-page { box-shadow:none !important; max-width:100% !important; }
+    body.report-mode .rep-actions { display:none !important; }
+    @page { size:A4; margin:8mm; }
+  }
+
+  /* ===== Report Template 2 (Spec / Pass-Fail lab report style) ===== */
+  .t2-page {
+    max-width:960px; margin:0 auto; background:#fff; padding:12px 16px 14px;
+    border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.25); direction:ltr; text-align:left;
+    font-family:'Tahoma','Segoe UI',sans-serif; color:var(--navy); font-size:9.5px; line-height:1.25;
+    position:relative; overflow:hidden;
+  }
+  .t2-corner-tl {
+    position:absolute; top:0; left:0; width:0; height:0;
+    border-top:70px solid var(--navy); border-right:70px solid transparent; z-index:0;
+  }
+  .t2-corner-br {
+    position:absolute; bottom:0; right:0; width:0; height:0;
+    border-bottom:36px solid #9aa5b1; border-left:110px solid transparent; z-index:0; opacity:0.6;
+  }
+  .t2-header { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--navy); padding-bottom:6px; margin-bottom:6px; }
+  .t2-header h1 { margin:0 0 0 10px; font-size:20px; font-weight:900; color:#111; letter-spacing:0.3px; }
+  .t2-header h2 { margin:1px 0 0 10px; font-size:11px; color:var(--blue); font-weight:bold; }
+  .t2-headerbox { border:1px solid var(--border); border-radius:4px; font-size:8.5px; padding:4px 8px; min-width:190px; }
+  .t2-headerbox div { display:flex; justify-content:space-between; gap:8px; padding:0.5px 0; text-transform:uppercase; }
+  .t2-headerbox b { color:var(--navy); }
+  .t2-grid3 { display:grid; grid-template-columns:1.15fr 1fr 1fr; gap:6px; margin-bottom:6px; }
+  .t2-box { border:1px solid var(--border); border-radius:4px; overflow:hidden; font-size:9px; margin-bottom:6px; }
+  .t2-box h3 { background:var(--navy); color:#fff; margin:0; padding:3px 8px; font-size:9px; letter-spacing:0.3px; text-transform:uppercase; }
+  .t2-box .t2-box-body { padding:4px 8px; }
+  .t2-row { display:flex; gap:4px; padding:1px 0; }
+  .t2-row .t2-label { flex:0 0 48%; color:#345; font-weight:bold; }
+  .t2-row .t2-sep { flex:0 0 6px; }
+  .t2-row .t2-value { flex:1; word-break:break-word; }
+  .t2-personnel { display:flex; justify-content:space-around; font-size:9px; }
+  .t2-personnel b { color:var(--navy); }
+  .t2-table { width:100%; border-collapse:collapse; font-size:8px; margin-bottom:6px; }
+  .t2-table caption { background:var(--navy); color:#fff; padding:3px 0; font-weight:bold; font-size:9px; caption-side:top; text-transform:uppercase; }
+  .t2-table th, .t2-table td { border:1px solid var(--border); padding:2px 3px; text-align:center; }
+  .t2-table thead th { background:var(--thead); color:var(--navy); }
+  .t2-table tbody tr:nth-child(even) { background:var(--zebra); }
+  .t2-table .pass { color:#1b7a1b; font-weight:bold; }
+  .t2-table .fail { color:#c0392b; font-weight:bold; }
+  .t2-note { font-size:8px; color:#555; margin:2px 0 8px; }
+  .t2-chart-row { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; margin-bottom:6px; }
+  .t2-chart-box img { width:100%; max-height:230px; object-fit:contain; }
+  .t2-status-pass { color:#1b7a1b; font-weight:900; }
+  .t2-status-fail { color:#c0392b; font-weight:900; }
+  .t2-footer { position:relative; z-index:1; border-top:1px solid var(--border); padding-top:5px; font-size:8.5px; font-style:italic; color:#345; }
+
+  /* ===== Report Template 3 (Modern Dashboard style) ===== */
+  .t3-page {
+    max-width:960px; margin:0 auto; background:#fff; border-radius:14px; overflow:hidden;
+    box-shadow:0 4px 18px rgba(0,0,0,.22); font-family:'Tahoma','Segoe UI',sans-serif;
+    direction:ltr; text-align:left; color:#1b2a3a; font-size:9.5px; line-height:1.3;
+  }
+  .t3-hero {
+    position:relative; padding:16px 20px 30px;
+    background:linear-gradient(135deg,#0f2c54 0%,#155b74 55%,#159e87 100%);
+    color:#fff;
+  }
+  .t3-hero h1 { margin:0; font-size:19px; font-weight:900; letter-spacing:.3px; }
+  .t3-hero h2 { margin:2px 0 0; font-size:10.5px; font-weight:bold; opacity:.88; }
+  .t3-badge {
+    position:absolute; top:14px; right:18px; padding:5px 14px; border-radius:999px;
+    font-size:10px; font-weight:900; letter-spacing:.5px; color:#fff;
+  }
+  .t3-badge.pass { background:#1fb15c; }
+  .t3-badge.fail { background:#e5484d; }
+  .t3-badge.neutral { background:rgba(255,255,255,.25); }
+  .t3-hero-meta { display:flex; gap:16px; margin-top:10px; font-size:8.5px; opacity:.92; flex-wrap:wrap; }
+  .t3-hero-meta b { font-weight:900; }
+  .t3-kpis { display:flex; gap:10px; margin:-20px 18px 12px; position:relative; z-index:2; }
+  .t3-kpi {
+    flex:1; background:#fff; border-radius:10px; box-shadow:0 3px 10px rgba(0,0,0,.15);
+    padding:8px 10px 7px; border-top:4px solid #159e87;
+  }
+  .t3-kpi.c2 { border-top-color:#2f6fed; }
+  .t3-kpi.c3 { border-top-color:#8a5cf6; }
+  .t3-kpi.c4 { border-top-color:var(--gold); }
+  .t3-kpi-value { font-size:16px; font-weight:900; color:#0f2c54; }
+  .t3-kpi-label { font-size:7.5px; text-transform:uppercase; letter-spacing:.4px; color:#7a8699; font-weight:bold; margin-top:1px; }
+  .t3-body { padding:2px 18px 6px; display:grid; grid-template-columns:1.5fr 1fr; gap:10px; }
+  .t3-card { background:#fff; border:1px solid #e7ebf1; border-radius:10px; padding:8px 10px; box-shadow:0 2px 6px rgba(0,0,0,.05); margin-bottom:8px; }
+  .t3-card h4 { margin:0 0 5px; font-size:9.5px; font-weight:900; color:#0f2c54; text-transform:uppercase; letter-spacing:.3px;
+    border-left:3px solid #159e87; padding-left:6px; }
+  .t3-row { display:flex; gap:4px; padding:1px 0; font-size:8.7px; }
+  .t3-row .t3-label { flex:0 0 48%; color:#5b6b80; font-weight:bold; }
+  .t3-row .t3-value { flex:1; color:#1b2a3a; word-break:break-word; }
+  .t3-chart-card img { width:100%; max-height:250px; object-fit:contain; }
+  .t3-tablewrap { border:1px solid #e7ebf1; border-radius:10px; overflow:hidden; margin:0 18px 10px; box-shadow:0 2px 6px rgba(0,0,0,.05); }
+  .t3-tablewrap .t3-tabletitle { background:linear-gradient(135deg,#155b74,#159e87); color:#fff; font-weight:900; font-size:9.5px; padding:5px 10px; text-transform:uppercase; letter-spacing:.3px; }
+  .t3-table { width:100%; border-collapse:collapse; font-size:8.3px; }
+  .t3-table th, .t3-table td { padding:3px 4px; text-align:center; border-bottom:1px solid #eef1f5; }
+  .t3-table thead th { background:#f0f7f6; color:#0f2c54; font-weight:bold; }
+  .t3-table tbody tr:nth-child(even) { background:#fafcfd; }
+  .t3-footer { display:flex; justify-content:space-between; gap:8px; padding:10px 18px 14px; border-top:1px solid #eef1f5; font-size:8.5px; }
+  .t3-footer .t3-sig { flex:1; text-align:center; }
+  .t3-footer .t3-sig .line { border-top:1.5px solid #0f2c54; margin-top:14px; padding-top:3px; }
+  .t3-remarks { margin:0 18px 10px; font-size:8.7px; color:#5b6b80; font-style:italic; }
+
+  /* ===== Report Template 4 (Classic Geotech Lab style, black border, Rock Corrected vs Uncorrected) ===== */
+  .t4-page {
+    max-width:900px; margin:0 auto; background:#fff; border:3px solid #000; padding:10px 14px;
+    font-family:'Times New Roman', Georgia, serif; direction:ltr; text-align:left; color:#000; font-size:10px; line-height:1.3;
+  }
+  .t4-title { text-align:center; font-size:19px; font-weight:900; letter-spacing:.5px; border-bottom:2px solid #000; padding-bottom:4px; margin-bottom:6px; }
+  .t4-toprow { display:grid; grid-template-columns:1.5fr 1fr; gap:10px; margin-bottom:8px; }
+  .t4-curveno { text-align:right; font-size:14px; font-weight:bold; margin-bottom:4px; }
+  .t4-chartbox img { width:100%; max-height:280px; object-fit:contain; border:1px solid #000; }
+  .t4-legend { font-size:8.5px; text-align:center; margin-top:3px; }
+  .t4-spec { font-size:9px; border:1px solid #000; padding:6px 8px; }
+  .t4-spec .t4-hdr { font-weight:900; font-size:10px; margin-bottom:3px; }
+  .t4-spec .t4-line { display:flex; justify-content:space-between; border-bottom:1px dotted #999; padding:1.5px 0; gap:6px; }
+  .t4-spec .t4-line b { font-weight:bold; white-space:nowrap; }
+  .t4-spec .t4-line span.val { text-align:right; }
+  .t4-spec .t4-sub { display:flex; gap:14px; }
+  .t4-datatitle { text-align:center; font-weight:900; font-size:10.5px; margin:6px 0 3px; text-decoration:underline; }
+  .t4-table { width:100%; border-collapse:collapse; font-size:9px; font-family:'Courier New',monospace; margin-bottom:8px; }
+  .t4-table th, .t4-table td { border:1px solid #000; padding:2px 4px; text-align:center; }
+  .t4-table th:first-child, .t4-table td:first-child { text-align:right; font-family:'Times New Roman',serif; font-weight:bold; }
+  .t4-footer { display:grid; grid-template-columns:1.1fr 1fr 1.2fr; border:1px solid #000; margin-bottom:6px; }
+  .t4-footer > div { padding:5px 8px; border-left:1px solid #000; font-size:9.5px; }
+  .t4-footer > div:first-child { border-left:none; }
+  .t4-footer .t4-fhdr { font-weight:900; text-align:center; border-bottom:1px solid #000; margin:-5px -8px 4px; padding:3px; font-size:9px; }
+  .t4-bottombar { display:flex; gap:14px; border:1px solid #000; border-top:none; padding:4px 8px; font-size:9.5px; }
+  .t4-bottombar b { font-weight:bold; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="tab active" id="tabBtn1557" onclick="showTab('1557')" data-i18n="tab1557">بروكتور معدل - D1557</button>
+  <button class="tab" id="tabBtn698" onclick="showTab('698')" data-i18n="tab698">بروكتور قياسي - D698</button>
+  <button class="tab" id="langToggleBtn" onclick="toggleLang()" style="background:var(--gold);">EN / AR</button>
+  <button class="tab" id="themeToggleBtn" onclick="toggleTheme()" style="background:var(--green);">🎨 ثيم 2</button>
+</div>
+
+<div class="container">
+
+<!-- ================= PANEL: ASTM D1557 (Modified Proctor) ================= -->
+<div class="panel active" id="panel-1557">
+  <h2 class="title" data-i18n="title1557">فحص بروكتور المعدل - ASTM D1557</h2>
+  <div class="subtitle" data-i18n="subtitle1557">مطرقة 10 رطل (44.5 نيوتن) - ارتفاع سقوط 18 بوصة - 5 طبقات - طاقة دمك 2700 kN-m/m³</div>
+
+  <div class="reportinfo" style="grid-template-columns:1fr 1fr 1fr;">
+    <label>رقم التقرير (Report No.)
+      <input type="text" id="reportNo1557" placeholder="MPTR-2024-XXX">
+    </label>
+    <label>الرقم المرجعي للمعمل (Lab Ref. No.)
+      <input type="text" id="labRefNo1557">
+    </label>
+    <label>الصفحة (Page)
+      <input type="text" id="pageNo1557" value="1 of 1">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">بيانات المشروع (Project Information)</h2>
+  <div class="reportinfo">
+    <label>اسم المشروع (Project Name)
+      <input type="text" id="projectName1557">
+    </label>
+    <label>رقم العقد (Contract No.)
+      <input type="text" id="contractNo1557">
+    </label>
+    <label>العميل (Client)
+      <input type="text" id="clientName1557">
+    </label>
+    <label>الاستشاري (Consultant)
+      <input type="text" id="consultantName1557">
+    </label>
+    <label>المقاول (Contractor)
+      <input type="text" id="contractorName1557">
+    </label>
+    <label>موقع المشروع (Project Location)
+      <input type="text" id="projectLocation1557">
+    </label>
+    <label>رقم العينة (Sample ID)
+      <input type="text" id="sampleNo1557">
+    </label>
+    <label>رقم البئر/الحفرة (Borehole / Test Pit No.)
+      <input type="text" id="boreholeNo1557">
+    </label>
+    <label>وصف التربة (Soil Description)
+      <input type="text" id="soilDescription1557">
+    </label>
+    <label>الميلاد/الكيلومتر (Chainage)
+      <input type="text" id="chainage1557">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">الظروف البيئية (Environmental Conditions)</h2>
+  <div class="reportinfo">
+    <label>الطقس (Weather)
+      <input type="text" id="weather1557">
+    </label>
+    <label>درجة الحرارة المحيطة °C (Ambient Temperature)
+      <input type="text" id="ambientTemp1557">
+    </label>
+    <label>الرطوبة النسبية % (Relative Humidity)
+      <input type="text" id="relativeHumidity1557">
+    </label>
+    <label>حالة الرياح (Wind Condition)
+      <input type="text" id="windCondition1557">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">معلومات الفحص (Test Information)</h2>
+  <div class="reportinfo">
+    <label>القطر الداخلي للقالب مم (Mold Diameter)
+      <input type="text" id="moldDiameter1557" value="101.6 mm">
+    </label>
+    <label>ارتفاع القالب مم (Mold Height)
+      <input type="text" id="moldHeight1557" value="116.4 mm">
+    </label>
+    <label>وزن المطرقة (Hammer Weight)
+      <input type="text" id="hammerWeight1557" value="4.54 kg">
+    </label>
+    <label>ارتفاع السقوط (Drop Height)
+      <input type="text" id="dropHeight1557" value="457 mm (18 in.)">
+    </label>
+    <label>عدد الطبقات (Number of Layers)
+      <input type="text" id="numLayers1557" value="5">
+    </label>
+    <label>عدد الضربات لكل طبقة (Blows per Layer)
+      <input type="text" id="blowsPerLayer1557" value="25">
+    </label>
+    <label>المنخل المستخدم (Sieve Used)
+      <input type="text" id="sieveUsed1557" value="4.75 mm (No. 4)">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">التواريخ والمسؤولون (Dates & Personnel)</h2>
+  <div class="reportinfo">
+    <label>تاريخ الاستلام (Date Received)
+      <input type="date" id="dateReceived1557">
+    </label>
+    <label>تاريخ الفحص (Date Tested)
+      <input type="date" id="testDate1557">
+    </label>
+    <label>تاريخ التقرير (Date Reported)
+      <input type="date" id="dateReported1557">
+    </label>
+    <label>تم الفحص بواسطة (Tested By)
+      <input type="text" id="techName1557">
+    </label>
+    <label>روجع بواسطة (Checked By)
+      <input type="text" id="checkedBy1557">
+    </label>
+    <label>اعتمد بواسطة (Approved By)
+      <input type="text" id="approvedBy1557">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">ملخص النتائج (Results Summary)</h2>
+  <div class="reportinfo">
+    <label>تصنيف التربة USCS (Soil Classification)
+      <input type="text" id="soilClassification1557">
+    </label>
+    <label>ملاحظات (Remarks)
+      <input type="text" id="remarks1557" value="Sample tested in accordance with ASTM D1557.">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">خواص إضافية للتربة (Additional Soil Index Properties)</h2>
+  <div class="reportinfo">
+    <label>تصنيف AASHTO
+      <input type="text" id="aashtoClass1557">
+    </label>
+    <label>حد السيولة LL (%)
+      <input type="text" id="liquidLimit1557" value="NP">
+    </label>
+    <label>دليل اللدونة PI
+      <input type="text" id="plasticityIndex1557" value="NP">
+    </label>
+    <label>الرطوبة الطبيعية NM (%)
+      <input type="text" id="naturalMoisture1557">
+    </label>
+    <label>% الباقي على منخل 3/4 بوصة
+      <input type="text" id="percentRetained34in1557">
+    </label>
+    <label>% المار من منخل رقم 200
+      <input type="text" id="percentPassingNo2001557">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">بيانات إضافية - نمط التقرير الثاني (Spec &amp; Sample Condition)</h2>
+  <div class="reportinfo">
+    <label>تاريخ الإصدار (Issue Date)
+      <input type="date" id="issueDate1557">
+    </label>
+    <label>نسبة الدمك المطلوبة % (Required Compaction, % of MDD)
+      <input type="number" step="0.1" id="reqCompactionPct1557" value="95">
+    </label>
+    <label>الحد الأدنى لنسبة الرطوبة % (Spec Min Moisture, اختياري)
+      <input type="number" step="0.1" id="specMoistMin1557">
+    </label>
+    <label>الحد الأقصى لنسبة الرطوبة % (Spec Max Moisture, اختياري)
+      <input type="number" step="0.1" id="specMoistMax1557">
+    </label>
+    <label>حالة العينة (Sample Condition)
+      <select id="sampleCondition1557">
+        <option value="Disturbed">Disturbed</option>
+        <option value="Undisturbed">Undisturbed</option>
+      </select>
+    </label>
+    <label>تجهيز العينة (Sample Preparation)
+      <select id="samplePrep1557">
+        <option value="Air Dried">Air Dried</option>
+        <option value="Moist">Moist</option>
+        <option value="Oven Dried">Oven Dried</option>
+      </select>
+    </label>
+    <label>غربلة أكبر من 4.75 مم (Sieve Analysis, &gt;4.75mm)
+      <select id="sieveAnalysisNote1557">
+        <option value="Removed">Removed</option>
+        <option value="Included">Included</option>
+        <option value="N/A">N/A</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="constants">
+    <label>طريقة الدمك حسب المعيار (ASTM Method)
+      <select id="compactionMethod1557" onchange="applyMethodDefaults('1557')">
+        <option value="A">Method A — قالب 4 بوصة، منخل No.4 (يستخدم إذا الباقي على المنخل ≤ 25%)</option>
+        <option value="B">Method B — قالب 4 بوصة، منخل 3/8 بوصة (يستخدم إذا الباقي على المنخل ≤ 25%)</option>
+        <option value="C" selected>Method C — قالب 6 بوصة، منخل 3/4 بوصة (يستخدم إذا الباقي على المنخل ≤ 30%)</option>
+      </select>
+    </label>
+  </div>
+  <div class="warn" id="methodWarning1557" style="display:none;"></div>
+
+  <div class="constants">
+    <label>حجم القالب (cm3)
+      <input type="number" id="moldVol1557" value="2124" oninput="calcAll('1557')">
+    </label>
+    <label>وزن القالب فارغ (<span id="moldEmptyWeightUnit1557">g</span>)
+      <input type="number" id="moldEmptyWeight1557" oninput="calcAll('1557')">
+    </label>
+  </div>
+  <div class="constants">
+    <label>وحدة وزن العينة (Mass Unit)
+      <select id="massUnit1557" onchange="calcAll('1557')">
+        <option value="g">جرام (g)</option>
+        <option value="kg">كيلوجرام (kg)</option>
+      </select>
+    </label>
+    <label>وحدة الكثافة (Density Unit)
+      <select id="densityUnit1557" onchange="calcAll('1557')">
+        <option value="gcm3">جم/سم³ (g/cm³)</option>
+        <option value="kgm3">كيلوجرام/م³ (kg/m³)</option>
+        <option value="kn">كيلونيوتن/م³ (kN/m³)</option>
+      </select>
+    </label>
+  </div>
+  <div class="constants">
+    <label>الوزن النوعي لحبيبات التربة Gs (لمنحنى التشبع)
+      <input type="number" step="0.01" id="gsValue1557" value="2.70" oninput="calcAll('1557')">
+    </label>
+    <label>شكل الرسم البياني (Chart Style)
+      <select id="chartStyle1557" onchange="calcAll('1557')">
+        <option value="smooth">منحنى ناعم</option>
+        <option value="straight">خطوط مستقيمة</option>
+        <option value="area">منحنى مع تعبئة</option>
+      </select>
+    </label>
+  </div>
+  <div class="constants">
+    <label>ثيم ألوان الرسم البياني (Chart Theme)
+      <select id="chartTheme1557" onchange="calcAll('1557')">
+        <option value="navy">كلاسيكي (كحلي)</option>
+        <option value="modern">عصري (مينيمال)</option>
+        <option value="dark">داكن (هندسي)</option>
+        <option value="sunset">غروب (تدرج دافئ)</option>
+        <option value="print">أبيض وأسود (للطباعة)</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="table-scroll"><table id="canTable1557">
+    <thead>
+      <tr>
+        <th class="headlabel">Can No</th>
+        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>وزن العلبة + تربة رطبة (g)</th>
+        <td><input class="cell w1" oninput="calcAll('1557')"></td>
+        <td><input class="cell w1" oninput="calcAll('1557')"></td>
+        <td><input class="cell w1" oninput="calcAll('1557')"></td>
+        <td><input class="cell w1" oninput="calcAll('1557')"></td>
+        <td><input class="cell w1" oninput="calcAll('1557')"></td>
+      </tr>
+      <tr><th>وزن العلبة + تربة جافة (g)</th>
+        <td><input class="cell w2" oninput="calcAll('1557')"></td>
+        <td><input class="cell w2" oninput="calcAll('1557')"></td>
+        <td><input class="cell w2" oninput="calcAll('1557')"></td>
+        <td><input class="cell w2" oninput="calcAll('1557')"></td>
+        <td><input class="cell w2" oninput="calcAll('1557')"></td>
+      </tr>
+      <tr><th>وزن العلبة فقط (g)</th>
+        <td><input class="cell w3" oninput="calcAll('1557')"></td>
+        <td><input class="cell w3" oninput="calcAll('1557')"></td>
+        <td><input class="cell w3" oninput="calcAll('1557')"></td>
+        <td><input class="cell w3" oninput="calcAll('1557')"></td>
+        <td><input class="cell w3" oninput="calcAll('1557')"></td>
+      </tr>
+      <tr><th>وزن الماء (g)</th>
+        <td class="calc ww">-</td><td class="calc ww">-</td><td class="calc ww">-</td><td class="calc ww">-</td><td class="calc ww">-</td>
+      </tr>
+      <tr><th>وزن التربة الجافة (g)</th>
+        <td class="calc wd">-</td><td class="calc wd">-</td><td class="calc wd">-</td><td class="calc wd">-</td><td class="calc wd">-</td>
+      </tr>
+      <tr><th>نسبة الرطوبة (%)</th>
+        <td class="calc moist">-</td><td class="calc moist">-</td><td class="calc moist">-</td><td class="calc moist">-</td><td class="calc moist">-</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-scroll"><table id="deterTable1557">
+    <thead>
+      <tr>
+        <th class="headlabel">Deter No</th>
+        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>وزن القالب + تربة رطبة (g)</th>
+        <td><input class="cell m2" oninput="calcAll('1557')"></td>
+        <td><input class="cell m2" oninput="calcAll('1557')"></td>
+        <td><input class="cell m2" oninput="calcAll('1557')"></td>
+        <td><input class="cell m2" oninput="calcAll('1557')"></td>
+        <td><input class="cell m2" oninput="calcAll('1557')"></td>
+      </tr>
+      <tr><th>الكثافة الرطبة (g/cm3)</th>
+        <td class="calc wetd">-</td><td class="calc wetd">-</td><td class="calc wetd">-</td><td class="calc wetd">-</td><td class="calc wetd">-</td>
+      </tr>
+      <tr><th>نسبة الرطوبة (%)</th>
+        <td class="calc moist2">-</td><td class="calc moist2">-</td><td class="calc moist2">-</td><td class="calc moist2">-</td><td class="calc moist2">-</td>
+      </tr>
+      <tr><th>الكثافة الجافة (g/cm3)</th>
+        <td class="calc dryd">-</td><td class="calc dryd">-</td><td class="calc dryd">-</td><td class="calc dryd">-</td><td class="calc dryd">-</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="btnrow">
+    <button class="btn reset" onclick="resetAll('1557')">إعادة تعيين</button>
+    <button class="btn calc" onclick="calcAll('1557')">احسب</button>
+  </div>
+  <div class="btnrow">
+    <button class="btn demo" onclick="loadDemo('1557')">مثال تجريبي</button>
+  </div>
+
+  <div class="chartwrap">
+    <canvas id="proctorChart1557" height="300"></canvas>
+    <div class="legend">
+      <span><span class="sw" style="background:#e53935;"></span>منحنى بروكتور (قبل التصحيح)</span>
+      <span id="correctedLegend1557" style="display:none;"><span class="sw" style="background:#1f8a5f;"></span>منحنى بعد تصحيح D4718</span>
+      <span><span class="sw dashed"></span>منحنى التشبع (100% Saturation / ZAV)</span>
+    </div>
+  </div>
+
+  <div class="resultbox" id="resultBox1557">max dry density = -- , OMC = -- %</div>
+  <div class="warn" id="fitWarning1557">⚠ أدخل 3 نقاط فحص على الأقل لحساب المنحنى الأمثل ونقطة الذروة بدقة</div>
+  <div class="astm">ASTM D1557</div>
+
+  <h2 class="title" style="margin-top:22px;">تصحيح الحبيبات الخشنة - ASTM D4718</h2>
+  <div class="table-scroll"><table id="d4718Table1557">
+    <thead>
+      <tr><th class="headlabel" colspan="2">بيانات التصحيح</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>نسبة الحبيبات الخشنة المحجوزة على المنخل Pc (%)</th>
+        <td><input type="number" step="0.1" class="cell" id="pcVal1557" oninput="calcAll('1557')"></td>
+      </tr>
+      <tr><th>الوزن النوعي الظاهري المشبع سطحياً للحبيبات الخشنة Gm (SSD)</th>
+        <td><input type="number" step="0.01" class="cell" id="gmVal1557" oninput="calcAll('1557')"></td>
+      </tr>
+      <tr><th>المحتوى الرطوبي الفعلي للحبيبات الخشنة ωc (%)</th>
+        <td><input type="number" step="0.1" class="cell" id="wcVal1557" oninput="calcAll('1557')"></td>
+      </tr>
+      <tr><th>نسبة الحبيبات الناعمة Pf (%)</th>
+        <td class="calc" id="pfVal1557">-</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="resultbox" id="resultBoxCorrected1557" style="background:#1f8a5f;">
+    الكثافة الجافة القصوى المصححة = -- , الرطوبة المثلى المصححة = -- %
+  </div>
+  <div class="astm">ASTM D4718</div>
+
+  <div class="constants">
+    <label>نمط التقرير (Report Template)
+      <select id="reportTemplate1557">
+        <option value="classic">التقرير الاحترافي (الكلاسيكي)</option>
+        <option value="template2">تقرير النمط الثاني (مواصفات وفحص حدود)</option>
+        <option value="template3">تقرير النمط الثالث (لوحة قيادة عصرية)</option>
+        <option value="template4">تقرير النمط الرابع (منحنى مصحح/غير مصحح - جيوتقني كلاسيكي)</option>
+      </select>
+    </label>
+  </div>
+  <div class="btnrow" style="margin-top:8px;">
+    <button class="btn calc" onclick="generateReport('1557')">إنشاء التقرير</button>
+  </div>
+  <div class="btnrow">
+    <button class="btn demo" onclick="exportReportToExcel('1557','ASTM D1557 (Modified Proctor)','2700 kN-m/m³')">تصدير Excel احترافي</button>
+  </div>
+  <div class="btnrow">
+    <button class="btn demo" onclick="saveData('1557')">حفظ البيانات</button>
+    <button class="btn reset" onclick="document.getElementById('loadFile1557').click()">تحميل بيانات محفوظة</button>
+    <input type="file" id="loadFile1557" accept=".json" style="display:none" onchange="loadData('1557', event)">
+  </div>
+  <div class="btnrow">
+    <button class="btn calc" id="lockBtn1557" onclick="toggleLock('1557')">🔒 قفل البيانات المدخلة</button>
+  </div>
+</div>
+
+<!-- ================= PANEL: ASTM D698 (Standard Proctor) ================= -->
+<div class="panel" id="panel-698">
+  <h2 class="title">فحص بروكتور القياسي - ASTM D698</h2>
+  <div class="subtitle">مطرقة 5.5 رطل (24.5 نيوتن) - ارتفاع سقوط 12 بوصة - 3 طبقات - طاقة دمك 600 kN-m/m³</div>
+
+  <div class="reportinfo" style="grid-template-columns:1fr 1fr 1fr;">
+    <label>رقم التقرير (Report No.)
+      <input type="text" id="reportNo698" placeholder="SPTR-2024-XXX">
+    </label>
+    <label>الرقم المرجعي للمعمل (Lab Ref. No.)
+      <input type="text" id="labRefNo698">
+    </label>
+    <label>الصفحة (Page)
+      <input type="text" id="pageNo698" value="1 of 1">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">بيانات المشروع (Project Information)</h2>
+  <div class="reportinfo">
+    <label>اسم المشروع (Project Name)
+      <input type="text" id="projectName698">
+    </label>
+    <label>رقم العقد (Contract No.)
+      <input type="text" id="contractNo698">
+    </label>
+    <label>العميل (Client)
+      <input type="text" id="clientName698">
+    </label>
+    <label>الاستشاري (Consultant)
+      <input type="text" id="consultantName698">
+    </label>
+    <label>المقاول (Contractor)
+      <input type="text" id="contractorName698">
+    </label>
+    <label>موقع المشروع (Project Location)
+      <input type="text" id="projectLocation698">
+    </label>
+    <label>رقم العينة (Sample ID)
+      <input type="text" id="sampleNo698">
+    </label>
+    <label>رقم البئر/الحفرة (Borehole / Test Pit No.)
+      <input type="text" id="boreholeNo698">
+    </label>
+    <label>وصف التربة (Soil Description)
+      <input type="text" id="soilDescription698">
+    </label>
+    <label>الميلاد/الكيلومتر (Chainage)
+      <input type="text" id="chainage698">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">الظروف البيئية (Environmental Conditions)</h2>
+  <div class="reportinfo">
+    <label>الطقس (Weather)
+      <input type="text" id="weather698">
+    </label>
+    <label>درجة الحرارة المحيطة °C (Ambient Temperature)
+      <input type="text" id="ambientTemp698">
+    </label>
+    <label>الرطوبة النسبية % (Relative Humidity)
+      <input type="text" id="relativeHumidity698">
+    </label>
+    <label>حالة الرياح (Wind Condition)
+      <input type="text" id="windCondition698">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">معلومات الفحص (Test Information)</h2>
+  <div class="reportinfo">
+    <label>القطر الداخلي للقالب مم (Mold Diameter)
+      <input type="text" id="moldDiameter698" value="101.6 mm">
+    </label>
+    <label>ارتفاع القالب مم (Mold Height)
+      <input type="text" id="moldHeight698" value="116.4 mm">
+    </label>
+    <label>وزن المطرقة (Hammer Weight)
+      <input type="text" id="hammerWeight698" value="2.495 kg">
+    </label>
+    <label>ارتفاع السقوط (Drop Height)
+      <input type="text" id="dropHeight698" value="305 mm (12 in.)">
+    </label>
+    <label>عدد الطبقات (Number of Layers)
+      <input type="text" id="numLayers698" value="3">
+    </label>
+    <label>عدد الضربات لكل طبقة (Blows per Layer)
+      <input type="text" id="blowsPerLayer698" value="25">
+    </label>
+    <label>المنخل المستخدم (Sieve Used)
+      <input type="text" id="sieveUsed698" value="4.75 mm (No. 4)">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">التواريخ والمسؤولون (Dates & Personnel)</h2>
+  <div class="reportinfo">
+    <label>تاريخ الاستلام (Date Received)
+      <input type="date" id="dateReceived698">
+    </label>
+    <label>تاريخ الفحص (Date Tested)
+      <input type="date" id="testDate698">
+    </label>
+    <label>تاريخ التقرير (Date Reported)
+      <input type="date" id="dateReported698">
+    </label>
+    <label>تم الفحص بواسطة (Tested By)
+      <input type="text" id="techName698">
+    </label>
+    <label>روجع بواسطة (Checked By)
+      <input type="text" id="checkedBy698">
+    </label>
+    <label>اعتمد بواسطة (Approved By)
+      <input type="text" id="approvedBy698">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">ملخص النتائج (Results Summary)</h2>
+  <div class="reportinfo">
+    <label>تصنيف التربة USCS (Soil Classification)
+      <input type="text" id="soilClassification698">
+    </label>
+    <label>ملاحظات (Remarks)
+      <input type="text" id="remarks698" value="Sample tested in accordance with ASTM D698.">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">خواص إضافية للتربة (Additional Soil Index Properties)</h2>
+  <div class="reportinfo">
+    <label>تصنيف AASHTO
+      <input type="text" id="aashtoClass698">
+    </label>
+    <label>حد السيولة LL (%)
+      <input type="text" id="liquidLimit698" value="NP">
+    </label>
+    <label>دليل اللدونة PI
+      <input type="text" id="plasticityIndex698" value="NP">
+    </label>
+    <label>الرطوبة الطبيعية NM (%)
+      <input type="text" id="naturalMoisture698">
+    </label>
+    <label>% الباقي على منخل 3/4 بوصة
+      <input type="text" id="percentRetained34in698">
+    </label>
+    <label>% المار من منخل رقم 200
+      <input type="text" id="percentPassingNo200698">
+    </label>
+  </div>
+
+  <h2 class="title" style="margin-top:14px; font-size:14px;">بيانات إضافية - نمط التقرير الثاني (Spec &amp; Sample Condition)</h2>
+  <div class="reportinfo">
+    <label>تاريخ الإصدار (Issue Date)
+      <input type="date" id="issueDate698">
+    </label>
+    <label>نسبة الدمك المطلوبة % (Required Compaction, % of MDD)
+      <input type="number" step="0.1" id="reqCompactionPct698" value="95">
+    </label>
+    <label>الحد الأدنى لنسبة الرطوبة % (Spec Min Moisture, اختياري)
+      <input type="number" step="0.1" id="specMoistMin698">
+    </label>
+    <label>الحد الأقصى لنسبة الرطوبة % (Spec Max Moisture, اختياري)
+      <input type="number" step="0.1" id="specMoistMax698">
+    </label>
+    <label>حالة العينة (Sample Condition)
+      <select id="sampleCondition698">
+        <option value="Disturbed">Disturbed</option>
+        <option value="Undisturbed">Undisturbed</option>
+      </select>
+    </label>
+    <label>تجهيز العينة (Sample Preparation)
+      <select id="samplePrep698">
+        <option value="Air Dried">Air Dried</option>
+        <option value="Moist">Moist</option>
+        <option value="Oven Dried">Oven Dried</option>
+      </select>
+    </label>
+    <label>غربلة أكبر من 4.75 مم (Sieve Analysis, &gt;4.75mm)
+      <select id="sieveAnalysisNote698">
+        <option value="Removed">Removed</option>
+        <option value="Included">Included</option>
+        <option value="N/A">N/A</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="constants">
+    <label>طريقة الدمك حسب المعيار (ASTM Method)
+      <select id="compactionMethod698" onchange="applyMethodDefaults('698')">
+        <option value="A" selected>Method A — قالب 4 بوصة، منخل No.4 (يستخدم إذا الباقي على المنخل ≤ 25%)</option>
+        <option value="B">Method B — قالب 4 بوصة، منخل 3/8 بوصة (يستخدم إذا الباقي على المنخل ≤ 25%)</option>
+        <option value="C">Method C — قالب 6 بوصة، منخل 3/4 بوصة (يستخدم إذا الباقي على المنخل ≤ 30%)</option>
+      </select>
+    </label>
+  </div>
+  <div class="warn" id="methodWarning698" style="display:none;"></div>
+
+  <div class="constants">
+    <label>حجم القالب (cm3)
+      <input type="number" id="moldVol698" value="943" oninput="calcAll('698')">
+    </label>
+    <label>وزن القالب فارغ (<span id="moldEmptyWeightUnit698">g</span>)
+      <input type="number" id="moldEmptyWeight698" oninput="calcAll('698')">
+    </label>
+  </div>
+  <div class="constants">
+    <label>وحدة وزن العينة (Mass Unit)
+      <select id="massUnit698" onchange="calcAll('698')">
+        <option value="g">جرام (g)</option>
+        <option value="kg">كيلوجرام (kg)</option>
+      </select>
+    </label>
+    <label>وحدة الكثافة (Density Unit)
+      <select id="densityUnit698" onchange="calcAll('698')">
+        <option value="gcm3">جم/سم³ (g/cm³)</option>
+        <option value="kgm3">كيلوجرام/م³ (kg/m³)</option>
+        <option value="kn">كيلونيوتن/م³ (kN/m³)</option>
+      </select>
+    </label>
+  </div>
+  <div class="constants">
+    <label>الوزن النوعي لحبيبات التربة Gs (لمنحنى التشبع)
+      <input type="number" step="0.01" id="gsValue698" value="2.70" oninput="calcAll('698')">
+    </label>
+    <label>شكل الرسم البياني (Chart Style)
+      <select id="chartStyle698" onchange="calcAll('698')">
+        <option value="smooth">منحنى ناعم</option>
+        <option value="straight">خطوط مستقيمة</option>
+        <option value="area">منحنى مع تعبئة</option>
+      </select>
+    </label>
+  </div>
+  <div class="constants">
+    <label>ثيم ألوان الرسم البياني (Chart Theme)
+      <select id="chartTheme698" onchange="calcAll('698')">
+        <option value="navy">كلاسيكي (كحلي)</option>
+        <option value="modern">عصري (مينيمال)</option>
+        <option value="dark">داكن (هندسي)</option>
+        <option value="sunset">غروب (تدرج دافئ)</option>
+        <option value="print">أبيض وأسود (للطباعة)</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="table-scroll"><table id="canTable698">
+    <thead>
+      <tr>
+        <th class="headlabel">Can No</th>
+        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>وزن العلبة + تربة رطبة (g)</th>
+        <td><input class="cell w1" oninput="calcAll('698')"></td>
+        <td><input class="cell w1" oninput="calcAll('698')"></td>
+        <td><input class="cell w1" oninput="calcAll('698')"></td>
+        <td><input class="cell w1" oninput="calcAll('698')"></td>
+        <td><input class="cell w1" oninput="calcAll('698')"></td>
+      </tr>
+      <tr><th>وزن العلبة + تربة جافة (g)</th>
+        <td><input class="cell w2" oninput="calcAll('698')"></td>
+        <td><input class="cell w2" oninput="calcAll('698')"></td>
+        <td><input class="cell w2" oninput="calcAll('698')"></td>
+        <td><input class="cell w2" oninput="calcAll('698')"></td>
+        <td><input class="cell w2" oninput="calcAll('698')"></td>
+      </tr>
+      <tr><th>وزن العلبة فقط (g)</th>
+        <td><input class="cell w3" oninput="calcAll('698')"></td>
+        <td><input class="cell w3" oninput="calcAll('698')"></td>
+        <td><input class="cell w3" oninput="calcAll('698')"></td>
+        <td><input class="cell w3" oninput="calcAll('698')"></td>
+        <td><input class="cell w3" oninput="calcAll('698')"></td>
+      </tr>
+      <tr><th>وزن الماء (g)</th>
+        <td class="calc ww">-</td><td class="calc ww">-</td><td class="calc ww">-</td><td class="calc ww">-</td><td class="calc ww">-</td>
+      </tr>
+      <tr><th>وزن التربة الجافة (g)</th>
+        <td class="calc wd">-</td><td class="calc wd">-</td><td class="calc wd">-</td><td class="calc wd">-</td><td class="calc wd">-</td>
+      </tr>
+      <tr><th>نسبة الرطوبة (%)</th>
+        <td class="calc moist">-</td><td class="calc moist">-</td><td class="calc moist">-</td><td class="calc moist">-</td><td class="calc moist">-</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-scroll"><table id="deterTable698">
+    <thead>
+      <tr>
+        <th class="headlabel">Deter No</th>
+        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>وزن القالب + تربة رطبة (g)</th>
+        <td><input class="cell m2" oninput="calcAll('698')"></td>
+        <td><input class="cell m2" oninput="calcAll('698')"></td>
+        <td><input class="cell m2" oninput="calcAll('698')"></td>
+        <td><input class="cell m2" oninput="calcAll('698')"></td>
+        <td><input class="cell m2" oninput="calcAll('698')"></td>
+      </tr>
+      <tr><th>الكثافة الرطبة (g/cm3)</th>
+        <td class="calc wetd">-</td><td class="calc wetd">-</td><td class="calc wetd">-</td><td class="calc wetd">-</td><td class="calc wetd">-</td>
+      </tr>
+      <tr><th>نسبة الرطوبة (%)</th>
+        <td class="calc moist2">-</td><td class="calc moist2">-</td><td class="calc moist2">-</td><td class="calc moist2">-</td><td class="calc moist2">-</td>
+      </tr>
+      <tr><th>الكثافة الجافة (g/cm3)</th>
+        <td class="calc dryd">-</td><td class="calc dryd">-</td><td class="calc dryd">-</td><td class="calc dryd">-</td><td class="calc dryd">-</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="btnrow">
+    <button class="btn reset" onclick="resetAll('698')">إعادة تعيين</button>
+    <button class="btn calc" onclick="calcAll('698')">احسب</button>
+  </div>
+  <div class="btnrow">
+    <button class="btn demo" onclick="loadDemo('698')">مثال تجريبي</button>
+  </div>
+
+  <div class="chartwrap">
+    <canvas id="proctorChart698" height="300"></canvas>
+    <div class="legend">
+      <span><span class="sw" style="background:#e53935;"></span>منحنى بروكتور (قبل التصحيح)</span>
+      <span id="correctedLegend698" style="display:none;"><span class="sw" style="background:#1f8a5f;"></span>منحنى بعد تصحيح D4718</span>
+      <span><span class="sw dashed"></span>منحنى التشبع (100% Saturation / ZAV)</span>
+    </div>
+  </div>
+
+  <div class="resultbox" id="resultBox698">max dry density = -- , OMC = -- %</div>
+  <div class="warn" id="fitWarning698">⚠ أدخل 3 نقاط فحص على الأقل لحساب المنحنى الأمثل ونقطة الذروة بدقة</div>
+  <div class="astm">ASTM D698</div>
+
+  <h2 class="title" style="margin-top:22px;">تصحيح الحبيبات الخشنة - ASTM D4718</h2>
+  <div class="table-scroll"><table id="d4718Table698">
+    <thead>
+      <tr><th class="headlabel" colspan="2">بيانات التصحيح</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>نسبة الحبيبات الخشنة المحجوزة على المنخل Pc (%)</th>
+        <td><input type="number" step="0.1" class="cell" id="pcVal698" oninput="calcAll('698')"></td>
+      </tr>
+      <tr><th>الوزن النوعي الظاهري المشبع سطحياً للحبيبات الخشنة Gm (SSD)</th>
+        <td><input type="number" step="0.01" class="cell" id="gmVal698" oninput="calcAll('698')"></td>
+      </tr>
+      <tr><th>المحتوى الرطوبي الفعلي للحبيبات الخشنة ωc (%)</th>
+        <td><input type="number" step="0.1" class="cell" id="wcVal698" oninput="calcAll('698')"></td>
+      </tr>
+      <tr><th>نسبة الحبيبات الناعمة Pf (%)</th>
+        <td class="calc" id="pfVal698">-</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="resultbox" id="resultBoxCorrected698" style="background:#1f8a5f;">
+    الكثافة الجافة القصوى المصححة = -- , الرطوبة المثلى المصححة = -- %
+  </div>
+  <div class="astm">ASTM D4718</div>
+
+  <div class="constants">
+    <label>نمط التقرير (Report Template)
+      <select id="reportTemplate698">
+        <option value="classic">التقرير الكلاسيكي</option>
+        <option value="template2">تقرير النمط الثاني (مواصفات وفحص حدود)</option>
+        <option value="template3">تقرير النمط الثالث (لوحة قيادة عصرية)</option>
+        <option value="template4">تقرير النمط الرابع (منحنى مصحح/غير مصحح - جيوتقني كلاسيكي)</option>
+      </select>
+    </label>
+  </div>
+  <div class="btnrow" style="margin-top:8px;">
+    <button class="btn calc" onclick="generateReport('698')">إنشاء التقرير</button>
+  </div>
+  <div class="btnrow">
+    <button class="btn demo" onclick="exportReportToExcel('698','ASTM D698 (Standard Proctor)','600 kN-m/m³')">تصدير Excel احترافي</button>
+  </div>
+  <div class="btnrow">
+    <button class="btn demo" onclick="saveData('698')">حفظ البيانات</button>
+    <button class="btn reset" onclick="document.getElementById('loadFile698').click()">تحميل بيانات محفوظة</button>
+    <input type="file" id="loadFile698" accept=".json" style="display:none" onchange="loadData('698', event)">
+  </div>
+  <div class="btnrow">
+    <button class="btn calc" id="lockBtn698" onclick="toggleLock('698')">🔒 قفل البيانات المدخلة</button>
+  </div>
+</div>
+
+<div class="footer-brand">منصة القصبي للمواصفات الهندسية</div>
+</div>
+
+<button id="scrollTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})" title="الصعود لأعلى">↑</button>
+
+<!-- ================= PROFESSIONAL REPORT OVERLAY: ASTM D1557 ================= -->
+<div class="report-overlay" id="reportOverlay1557">
+  <div class="report-page" id="reportPageContent1557">
+
+    <div class="rep-header">
+      <div class="rep-flag"></div>
+      <div class="rep-titles">
+        <h1>MODIFIED PROCTOR TEST REPORT</h1>
+        <h2>ASTM D1557</h2>
+      </div>
+      <div class="rep-headerbox">
+        <div><b>Report No.</b><span id="rp-reportNo"></span></div>
+        <div><b>Lab Reference No.</b><span id="rp-labRefNo"></span></div>
+        <div><b>Page</b><span id="rp-pageNo"></span></div>
+      </div>
+    </div>
+
+    <div class="rep-grid">
+      <div class="rep-box rep-col-span2">
+        <h3>PROJECT INFORMATION</h3>
+        <div class="rep-box-body" id="rp-projectInfo"></div>
+      </div>
+      <div class="rep-box">
+        <h3>ENVIRONMENTAL CONDITIONS</h3>
+        <div class="rep-box-body" id="rp-envInfo"></div>
+      </div>
+      <div class="rep-box">
+        <h3>DATES &amp; PERSONNEL</h3>
+        <div class="rep-box-body" id="rp-datesInfo"></div>
+      </div>
+      <div class="rep-box">
+        <h3>TEST INFORMATION</h3>
+        <div class="rep-box-body" id="rp-testInfo"></div>
+      </div>
+      <div class="rep-box results">
+        <h3>RESULTS SUMMARY</h3>
+        <div class="rep-box-body" id="rp-resultsInfo"></div>
+      </div>
+    </div>
+
+    <table class="rep-table" id="repMoistureTable1557">
+      <caption>MOISTURE CONTENT TABLE (5 TRIALS)</caption>
+      <thead>
+        <tr>
+          <th>Trial</th>
+          <th>Wet Soil + Can (g)</th>
+          <th>Dry Soil + Can (g)</th>
+          <th>Can Weight (g)</th>
+          <th>Water Weight (g)</th>
+          <th>Dry Soil Weight (g)</th>
+          <th>Moisture Content (%)</th>
+        </tr>
+      </thead>
+      <tbody id="rp-moistureTableBody"></tbody>
+    </table>
+
+    <table class="rep-table" id="repCompactionTable1557">
+      <caption>COMPACTION RESULTS TABLE</caption>
+      <thead>
+        <tr>
+          <th>Trial</th>
+          <th>Mold + Soil Weight (g)</th>
+          <th>Mold Weight (g)</th>
+          <th>Wet Soil Weight (g)</th>
+          <th>Wet Density (Mg/m³)</th>
+          <th>Moisture Content (%)</th>
+          <th>Dry Density (Mg/m³)</th>
+          <th>Corrected Dry Density (Mg/m³)</th>
+        </tr>
+      </thead>
+      <tbody id="rp-compactionTableBody"></tbody>
+    </table>
+
+    <div class="rep-box" style="margin-bottom:6px;">
+      <h3>PROCTOR CURVE</h3>
+      <div class="rep-box-body">
+        <div class="rep-chart-row">
+          <img id="rp-chartImg" alt="Proctor Curve">
+          <div class="rep-mdd-box" id="rp-mddBox">MDD = -- Mg/m³<br>OMC = -- %</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rep-notes">
+      <b>Notes / Remarks:</b> <span id="rp-remarks"></span>
+    </div>
+
+    <div class="rep-sign">
+      <div>Tested By:<br><span id="rp-sign-tested"></span></div>
+      <div>Checked By:<br><span id="rp-sign-checked"></span></div>
+      <div>Approved By:<br><span id="rp-sign-approved"></span></div>
+      <div>Date:<br><span id="rp-sign-date"></span></div>
+    </div>
+
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReport1557()">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<!-- ================= CLASSIC REPORT OVERLAY: ASTM D698 ================= -->
+<div class="report-overlay" id="reportOverlay698">
+  <div class="report-page" id="reportPageContent698">
+
+    <div class="rep-header">
+      <div class="rep-flag"></div>
+      <div class="rep-titles">
+        <h1>STANDARD PROCTOR TEST REPORT</h1>
+        <h2>ASTM D698</h2>
+      </div>
+      <div class="rep-headerbox">
+        <div><b>Report No.</b><span id="rp698-reportNo"></span></div>
+        <div><b>Lab Reference No.</b><span id="rp698-labRefNo"></span></div>
+        <div><b>Page</b><span id="rp698-pageNo"></span></div>
+      </div>
+    </div>
+
+    <div class="rep-grid">
+      <div class="rep-box rep-col-span2">
+        <h3>PROJECT INFORMATION</h3>
+        <div class="rep-box-body" id="rp698-projectInfo"></div>
+      </div>
+      <div class="rep-box">
+        <h3>ENVIRONMENTAL CONDITIONS</h3>
+        <div class="rep-box-body" id="rp698-envInfo"></div>
+      </div>
+      <div class="rep-box">
+        <h3>DATES &amp; PERSONNEL</h3>
+        <div class="rep-box-body" id="rp698-datesInfo"></div>
+      </div>
+      <div class="rep-box">
+        <h3>TEST INFORMATION</h3>
+        <div class="rep-box-body" id="rp698-testInfo"></div>
+      </div>
+      <div class="rep-box results">
+        <h3>RESULTS SUMMARY</h3>
+        <div class="rep-box-body" id="rp698-resultsInfo"></div>
+      </div>
+    </div>
+
+    <table class="rep-table" id="repMoistureTable698">
+      <caption>MOISTURE CONTENT TABLE (5 TRIALS)</caption>
+      <thead>
+        <tr>
+          <th>Trial</th>
+          <th>Wet Soil + Can (g)</th>
+          <th>Dry Soil + Can (g)</th>
+          <th>Can Weight (g)</th>
+          <th>Water Weight (g)</th>
+          <th>Dry Soil Weight (g)</th>
+          <th>Moisture Content (%)</th>
+        </tr>
+      </thead>
+      <tbody id="rp698-moistureTableBody"></tbody>
+    </table>
+
+    <table class="rep-table" id="repCompactionTable698">
+      <caption>COMPACTION RESULTS TABLE</caption>
+      <thead>
+        <tr>
+          <th>Trial</th>
+          <th>Mold + Soil Weight (g)</th>
+          <th>Mold Weight (g)</th>
+          <th>Wet Soil Weight (g)</th>
+          <th>Wet Density (Mg/m³)</th>
+          <th>Moisture Content (%)</th>
+          <th>Dry Density (Mg/m³)</th>
+          <th>Corrected Dry Density (Mg/m³)</th>
+        </tr>
+      </thead>
+      <tbody id="rp698-compactionTableBody"></tbody>
+    </table>
+
+    <div class="rep-box" style="margin-bottom:6px;">
+      <h3>PROCTOR CURVE</h3>
+      <div class="rep-box-body">
+        <div class="rep-chart-row">
+          <img id="rp698-chartImg" alt="Proctor Curve">
+          <div class="rep-mdd-box" id="rp698-mddBox">MDD = -- Mg/m³<br>OMC = -- %</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rep-notes">
+      <b>Notes / Remarks:</b> <span id="rp698-remarks"></span>
+    </div>
+
+    <div class="rep-sign">
+      <div>Tested By:<br><span id="rp698-sign-tested"></span></div>
+      <div>Checked By:<br><span id="rp698-sign-checked"></span></div>
+      <div>Approved By:<br><span id="rp698-sign-approved"></span></div>
+      <div>Date:<br><span id="rp698-sign-date"></span></div>
+    </div>
+
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReport698()">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<!-- ================= REPORT TEMPLATE 2 (Spec/Pass-Fail style): ASTM D1557 ================= -->
+<div class="report-overlay" id="reportOverlayT2_1557">
+  <div class="t2-page" id="t2PageContent1557">
+    <div class="t2-corner-tl"></div>
+    <div class="t2-corner-br"></div>
+
+    <div class="t2-header">
+      <div>
+        <h1>MODIFIED PROCTOR TEST REPORT</h1>
+        <h2>ASTM D1557 (Modified Proctor)</h2>
+      </div>
+      <div class="t2-headerbox">
+        <div><b>Report No.</b><span id="rt2-reportNo"></span></div>
+        <div><b>Lab Reference No.</b><span id="rt2-labRefNo"></span></div>
+        <div><b>Issue Date</b><span id="rt2-issueDate"></span></div>
+        <div><b>Page</b><span id="rt2-pageNo"></span></div>
+      </div>
+    </div>
+
+    <div class="t2-grid3" style="position:relative; z-index:1;">
+      <div class="t2-box" style="grid-column:1; grid-row:1 / span 2;">
+        <h3>Project Information</h3>
+        <div class="t2-box-body" id="rt2-projectInfo"></div>
+      </div>
+      <div class="t2-box" style="grid-column:2; grid-row:1 / span 2;">
+        <h3>Test Information</h3>
+        <div class="t2-box-body" id="rt2-testInfo"></div>
+      </div>
+      <div class="t2-box" style="grid-column:3; grid-row:1;">
+        <h3>Environmental Conditions</h3>
+        <div class="t2-box-body" id="rt2-envInfo"></div>
+      </div>
+      <div class="t2-box" style="grid-column:3; grid-row:2;">
+        <h3>Dates</h3>
+        <div class="t2-box-body" id="rt2-datesInfo"></div>
+      </div>
+    </div>
+
+    <div class="t2-box" style="position:relative; z-index:1;">
+      <h3>Personnel</h3>
+      <div class="t2-box-body t2-personnel" id="rt2-personnel"></div>
+    </div>
+
+    <table class="t2-table">
+      <caption>Moisture Content Determination (5 Trials)</caption>
+      <thead>
+        <tr>
+          <th rowspan="2">Trial</th>
+          <th colspan="5">Mass (g)</th>
+          <th rowspan="2">Moisture Content (%)</th>
+          <th colspan="3">Specification (ASTM D1557)</th>
+        </tr>
+        <tr>
+          <th>Wet Soil + Can</th>
+          <th>Dry Soil + Can</th>
+          <th>Can Weight</th>
+          <th>Water Weight</th>
+          <th>Dry Soil Weight</th>
+          <th>Min. (%)</th>
+          <th>Max. (%)</th>
+          <th>Pass / Fail</th>
+        </tr>
+      </thead>
+      <tbody id="rt2-moistureTableBody"></tbody>
+    </table>
+    <div class="t2-note" id="rt2-moistureNote"></div>
+
+    <table class="t2-table">
+      <caption>Compaction Results</caption>
+      <thead>
+        <tr>
+          <th rowspan="2">Trial</th>
+          <th rowspan="2">Mold + Soil Weight (g)</th>
+          <th rowspan="2">Mold Weight (g)</th>
+          <th rowspan="2">Wet Soil Weight (g)</th>
+          <th rowspan="2">Wet Density</th>
+          <th rowspan="2">Moisture Content (%)</th>
+          <th rowspan="2">Dry Density</th>
+          <th colspan="3">Correction &amp; Specification (ASTM D1557)</th>
+        </tr>
+        <tr>
+          <th>Corrected Dry Density</th>
+          <th>Min. Dry Density<br>(% of MDD)</th>
+          <th>Pass / Fail</th>
+        </tr>
+      </thead>
+      <tbody id="rt2-compactionTableBody"></tbody>
+    </table>
+    <div class="t2-note" id="rt2-compactionNote"></div>
+
+    <div class="t2-chart-row">
+      <div class="t2-box t2-chart-box">
+        <h3>Proctor Curve</h3>
+        <div class="t2-box-body">
+          <img id="rt2-chartImg" alt="Proctor Curve">
+        </div>
+      </div>
+      <div>
+        <div class="t2-box">
+          <h3>Key Results</h3>
+          <div class="t2-box-body" id="rt2-keyResults"></div>
+        </div>
+        <div class="t2-box">
+          <h3>Sample Condition</h3>
+          <div class="t2-box-body" id="rt2-sampleCondition"></div>
+        </div>
+        <div class="t2-box">
+          <h3>Remarks</h3>
+          <div class="t2-box-body" id="rt2-remarks"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t2-footer">This report relates only to the sample tested.</div>
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReportT2('1557')">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<!-- ================= REPORT TEMPLATE 2 (Spec/Pass-Fail style): ASTM D698 ================= -->
+<div class="report-overlay" id="reportOverlayT2_698">
+  <div class="t2-page" id="t2PageContent698">
+    <div class="t2-corner-tl"></div>
+    <div class="t2-corner-br"></div>
+
+    <div class="t2-header">
+      <div>
+        <h1>STANDARD PROCTOR TEST REPORT</h1>
+        <h2>ASTM D698 (Standard Proctor)</h2>
+      </div>
+      <div class="t2-headerbox">
+        <div><b>Report No.</b><span id="rt2698-reportNo"></span></div>
+        <div><b>Lab Reference No.</b><span id="rt2698-labRefNo"></span></div>
+        <div><b>Issue Date</b><span id="rt2698-issueDate"></span></div>
+        <div><b>Page</b><span id="rt2698-pageNo"></span></div>
+      </div>
+    </div>
+
+    <div class="t2-grid3" style="position:relative; z-index:1;">
+      <div class="t2-box" style="grid-column:1; grid-row:1 / span 2;">
+        <h3>Project Information</h3>
+        <div class="t2-box-body" id="rt2698-projectInfo"></div>
+      </div>
+      <div class="t2-box" style="grid-column:2; grid-row:1 / span 2;">
+        <h3>Test Information</h3>
+        <div class="t2-box-body" id="rt2698-testInfo"></div>
+      </div>
+      <div class="t2-box" style="grid-column:3; grid-row:1;">
+        <h3>Environmental Conditions</h3>
+        <div class="t2-box-body" id="rt2698-envInfo"></div>
+      </div>
+      <div class="t2-box" style="grid-column:3; grid-row:2;">
+        <h3>Dates</h3>
+        <div class="t2-box-body" id="rt2698-datesInfo"></div>
+      </div>
+    </div>
+
+    <div class="t2-box" style="position:relative; z-index:1;">
+      <h3>Personnel</h3>
+      <div class="t2-box-body t2-personnel" id="rt2698-personnel"></div>
+    </div>
+
+    <table class="t2-table">
+      <caption>Moisture Content Determination (5 Trials)</caption>
+      <thead>
+        <tr>
+          <th rowspan="2">Trial</th>
+          <th colspan="5">Mass (g)</th>
+          <th rowspan="2">Moisture Content (%)</th>
+          <th colspan="3">Specification (ASTM D698)</th>
+        </tr>
+        <tr>
+          <th>Wet Soil + Can</th>
+          <th>Dry Soil + Can</th>
+          <th>Can Weight</th>
+          <th>Water Weight</th>
+          <th>Dry Soil Weight</th>
+          <th>Min. (%)</th>
+          <th>Max. (%)</th>
+          <th>Pass / Fail</th>
+        </tr>
+      </thead>
+      <tbody id="rt2698-moistureTableBody"></tbody>
+    </table>
+    <div class="t2-note" id="rt2698-moistureNote"></div>
+
+    <table class="t2-table">
+      <caption>Compaction Results</caption>
+      <thead>
+        <tr>
+          <th rowspan="2">Trial</th>
+          <th rowspan="2">Mold + Soil Weight (g)</th>
+          <th rowspan="2">Mold Weight (g)</th>
+          <th rowspan="2">Wet Soil Weight (g)</th>
+          <th rowspan="2">Wet Density</th>
+          <th rowspan="2">Moisture Content (%)</th>
+          <th rowspan="2">Dry Density</th>
+          <th colspan="3">Correction &amp; Specification (ASTM D698)</th>
+        </tr>
+        <tr>
+          <th>Corrected Dry Density</th>
+          <th>Min. Dry Density<br>(% of MDD)</th>
+          <th>Pass / Fail</th>
+        </tr>
+      </thead>
+      <tbody id="rt2698-compactionTableBody"></tbody>
+    </table>
+    <div class="t2-note" id="rt2698-compactionNote"></div>
+
+    <div class="t2-chart-row">
+      <div class="t2-box t2-chart-box">
+        <h3>Proctor Curve</h3>
+        <div class="t2-box-body">
+          <img id="rt2698-chartImg" alt="Proctor Curve">
+        </div>
+      </div>
+      <div>
+        <div class="t2-box">
+          <h3>Key Results</h3>
+          <div class="t2-box-body" id="rt2698-keyResults"></div>
+        </div>
+        <div class="t2-box">
+          <h3>Sample Condition</h3>
+          <div class="t2-box-body" id="rt2698-sampleCondition"></div>
+        </div>
+        <div class="t2-box">
+          <h3>Remarks</h3>
+          <div class="t2-box-body" id="rt2698-remarks"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t2-footer">This report relates only to the sample tested.</div>
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReportT2('698')">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<!-- ================= REPORT TEMPLATE 3 (Modern Dashboard style): ASTM D1557 ================= -->
+<div class="report-overlay" id="reportOverlayT3_1557">
+  <div class="t3-page" id="t3PageContent1557">
+    <div class="t3-hero">
+      <div class="t3-badge neutral" id="rt3-badge">TESTED</div>
+      <h1>Modified Proctor Test Report</h1>
+      <h2>ASTM D1557 — Compaction Characteristics of Soil</h2>
+      <div class="t3-hero-meta">
+        <div><b>Report No:</b> <span id="rt3-reportNo"></span></div>
+        <div><b>Sample ID:</b> <span id="rt3-sampleId"></span></div>
+        <div><b>Date Tested:</b> <span id="rt3-dateTested"></span></div>
+        <div><b>Page:</b> <span id="rt3-pageNo"></span></div>
+      </div>
+    </div>
+
+    <div class="t3-kpis">
+      <div class="t3-kpi">
+        <div class="t3-kpi-value" id="rt3-kpiMdd">--</div>
+        <div class="t3-kpi-label">Max Dry Density</div>
+      </div>
+      <div class="t3-kpi c2">
+        <div class="t3-kpi-value" id="rt3-kpiOmc">--</div>
+        <div class="t3-kpi-label">Optimum Moisture</div>
+      </div>
+      <div class="t3-kpi c3">
+        <div class="t3-kpi-value" id="rt3-kpiClass">--</div>
+        <div class="t3-kpi-label">Soil Classification</div>
+      </div>
+      <div class="t3-kpi c4">
+        <div class="t3-kpi-value" id="rt3-kpiCompaction">--</div>
+        <div class="t3-kpi-label">Required Compaction</div>
+      </div>
+    </div>
+
+    <div class="t3-body">
+      <div class="t3-card t3-chart-card">
+        <h4>Proctor Curve</h4>
+        <img id="rt3-chartImg" alt="Proctor Curve">
+      </div>
+      <div>
+        <div class="t3-card">
+          <h4>Project</h4>
+          <div id="rt3-projectInfo"></div>
+        </div>
+        <div class="t3-card">
+          <h4>Test Setup</h4>
+          <div id="rt3-testInfo"></div>
+        </div>
+        <div class="t3-card">
+          <h4>Personnel</h4>
+          <div id="rt3-personnel"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t3-tablewrap">
+      <div class="t3-tabletitle">Moisture Content Determination</div>
+      <table class="t3-table">
+        <thead><tr>
+          <th>Trial</th><th>Wet+Can</th><th>Dry+Can</th><th>Can Wt.</th><th>Water Wt.</th><th>Dry Soil Wt.</th><th>Moisture %</th>
+        </tr></thead>
+        <tbody id="rt3-moistureTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="t3-tablewrap">
+      <div class="t3-tabletitle">Compaction Results</div>
+      <table class="t3-table">
+        <thead><tr>
+          <th>Trial</th><th>Mold+Soil</th><th>Mold Wt.</th><th>Wet Soil Wt.</th><th>Wet Density</th><th>Moisture %</th><th>Dry Density</th><th>Corrected Dry Density</th>
+        </tr></thead>
+        <tbody id="rt3-compactionTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="t3-remarks"><b>Remarks:</b> <span id="rt3-remarks"></span></div>
+
+    <div class="t3-footer">
+      <div class="t3-sig"><div class="line">Tested By<br><span id="rt3-sign-tested"></span></div></div>
+      <div class="t3-sig"><div class="line">Checked By<br><span id="rt3-sign-checked"></span></div></div>
+      <div class="t3-sig"><div class="line">Approved By<br><span id="rt3-sign-approved"></span></div></div>
+      <div class="t3-sig"><div class="line">Date<br><span id="rt3-sign-date"></span></div></div>
+    </div>
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReportT3('1557')">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<!-- ================= REPORT TEMPLATE 3 (Modern Dashboard style): ASTM D698 ================= -->
+<div class="report-overlay" id="reportOverlayT3_698">
+  <div class="t3-page" id="t3PageContent698">
+    <div class="t3-hero">
+      <div class="t3-badge neutral" id="rt3698-badge">TESTED</div>
+      <h1>Standard Proctor Test Report</h1>
+      <h2>ASTM D698 — Compaction Characteristics of Soil</h2>
+      <div class="t3-hero-meta">
+        <div><b>Report No:</b> <span id="rt3698-reportNo"></span></div>
+        <div><b>Sample ID:</b> <span id="rt3698-sampleId"></span></div>
+        <div><b>Date Tested:</b> <span id="rt3698-dateTested"></span></div>
+        <div><b>Page:</b> <span id="rt3698-pageNo"></span></div>
+      </div>
+    </div>
+
+    <div class="t3-kpis">
+      <div class="t3-kpi">
+        <div class="t3-kpi-value" id="rt3698-kpiMdd">--</div>
+        <div class="t3-kpi-label">Max Dry Density</div>
+      </div>
+      <div class="t3-kpi c2">
+        <div class="t3-kpi-value" id="rt3698-kpiOmc">--</div>
+        <div class="t3-kpi-label">Optimum Moisture</div>
+      </div>
+      <div class="t3-kpi c3">
+        <div class="t3-kpi-value" id="rt3698-kpiClass">--</div>
+        <div class="t3-kpi-label">Soil Classification</div>
+      </div>
+      <div class="t3-kpi c4">
+        <div class="t3-kpi-value" id="rt3698-kpiCompaction">--</div>
+        <div class="t3-kpi-label">Required Compaction</div>
+      </div>
+    </div>
+
+    <div class="t3-body">
+      <div class="t3-card t3-chart-card">
+        <h4>Proctor Curve</h4>
+        <img id="rt3698-chartImg" alt="Proctor Curve">
+      </div>
+      <div>
+        <div class="t3-card">
+          <h4>Project</h4>
+          <div id="rt3698-projectInfo"></div>
+        </div>
+        <div class="t3-card">
+          <h4>Test Setup</h4>
+          <div id="rt3698-testInfo"></div>
+        </div>
+        <div class="t3-card">
+          <h4>Personnel</h4>
+          <div id="rt3698-personnel"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t3-tablewrap">
+      <div class="t3-tabletitle">Moisture Content Determination</div>
+      <table class="t3-table">
+        <thead><tr>
+          <th>Trial</th><th>Wet+Can</th><th>Dry+Can</th><th>Can Wt.</th><th>Water Wt.</th><th>Dry Soil Wt.</th><th>Moisture %</th>
+        </tr></thead>
+        <tbody id="rt3698-moistureTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="t3-tablewrap">
+      <div class="t3-tabletitle">Compaction Results</div>
+      <table class="t3-table">
+        <thead><tr>
+          <th>Trial</th><th>Mold+Soil</th><th>Mold Wt.</th><th>Wet Soil Wt.</th><th>Wet Density</th><th>Moisture %</th><th>Dry Density</th><th>Corrected Dry Density</th>
+        </tr></thead>
+        <tbody id="rt3698-compactionTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="t3-remarks"><b>Remarks:</b> <span id="rt3698-remarks"></span></div>
+
+    <div class="t3-footer">
+      <div class="t3-sig"><div class="line">Tested By<br><span id="rt3698-sign-tested"></span></div></div>
+      <div class="t3-sig"><div class="line">Checked By<br><span id="rt3698-sign-checked"></span></div></div>
+      <div class="t3-sig"><div class="line">Approved By<br><span id="rt3698-sign-approved"></span></div></div>
+      <div class="t3-sig"><div class="line">Date<br><span id="rt3698-sign-date"></span></div></div>
+    </div>
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReportT3('698')">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<!-- ================= REPORT TEMPLATE 4 (Classic Geotech Lab style): ASTM D1557 ================= -->
+<div class="report-overlay" id="reportOverlayT4_1557">
+  <div class="t4-page" id="t4PageContent1557">
+    <div class="t4-title">COMPACTION TEST REPORT</div>
+    <div class="t4-toprow">
+      <div>
+        <div class="t4-chartbox"><img id="rt4-chartImg" alt="Compaction Curve"></div>
+        <div class="t4-legend">● Rock Corrected &nbsp;&nbsp; ○ Uncorrected</div>
+      </div>
+      <div>
+        <div class="t4-curveno">Curve No. <span id="rt4-curveNo"></span></div>
+        <div class="t4-spec">
+          <div class="t4-hdr">Test Specification:</div>
+          <div id="rt4-testSpecLine" style="font-size:8.7px; margin-bottom:3px;"></div>
+          <div class="t4-line"><b>Preparation Method</b><span class="val" id="rt4-prepMethod"></span></div>
+          <div class="t4-line"><b>Hammer Wt.</b><span class="val" id="rt4-hammerWt"></span></div>
+          <div class="t4-line"><b>Hammer Drop</b><span class="val" id="rt4-hammerDrop"></span></div>
+          <div class="t4-line"><b>Number of Layers</b><span class="val" id="rt4-numLayers"></span></div>
+          <div class="t4-line"><b>Blows per Layer</b><span class="val" id="rt4-blows"></span></div>
+          <div class="t4-line"><b>Mold Size</b><span class="val" id="rt4-moldSize"></span></div>
+          <div class="t4-line"><b>Test Performed on Material Passing</b><span class="val" id="rt4-sieve"></span></div>
+          <div class="t4-line"><b>NM / LL / PI</b><span class="val" id="rt4-nmllpi"></span></div>
+          <div class="t4-line"><b>Sp.G. (ASTM D854)</b><span class="val" id="rt4-spg"></span></div>
+          <div class="t4-line"><b>%&gt;3/4 in. / %&lt;No.200</b><span class="val" id="rt4-gradation"></span></div>
+          <div class="t4-line"><b>USCS / AASHTO</b><span class="val" id="rt4-classification"></span></div>
+          <div class="t4-line"><b>Date Sampled</b><span class="val" id="rt4-dateSampled"></span></div>
+          <div class="t4-line"><b>Date Tested</b><span class="val" id="rt4-dateTested"></span></div>
+          <div class="t4-line"><b>Tested By</b><span class="val" id="rt4-testedBy"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t4-datatitle">TESTING DATA</div>
+    <table class="t4-table">
+      <thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+      <tbody id="rt4-testingDataBody"></tbody>
+    </table>
+
+    <div class="t4-footer">
+      <div>
+        <div class="t4-fhdr">ROCK CORRECTED TEST RESULTS</div>
+        <div id="rt4-correctedResults"></div>
+      </div>
+      <div>
+        <div class="t4-fhdr">UNCORRECTED</div>
+        <div id="rt4-uncorrectedResults"></div>
+      </div>
+      <div>
+        <div class="t4-fhdr">Material Description</div>
+        <div id="rt4-materialDesc" style="text-align:center;"></div>
+        <div style="margin-top:4px;"><b>Remarks:</b> <span id="rt4-remarks"></span></div>
+      </div>
+    </div>
+
+    <div class="t4-bottombar">
+      <div><b>Project No.</b> <span id="rt4-projectNo"></span></div>
+      <div><b>Client:</b> <span id="rt4-client"></span></div>
+      <div><b>Project:</b> <span id="rt4-project"></span></div>
+      <div><b>Contract:</b> <span id="rt4-contract"></span></div>
+    </div>
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReportT4('1557')">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<!-- ================= REPORT TEMPLATE 4 (Classic Geotech Lab style): ASTM D698 ================= -->
+<div class="report-overlay" id="reportOverlayT4_698">
+  <div class="t4-page" id="t4PageContent698">
+    <div class="t4-title">COMPACTION TEST REPORT</div>
+    <div class="t4-toprow">
+      <div>
+        <div class="t4-chartbox"><img id="rt4698-chartImg" alt="Compaction Curve"></div>
+        <div class="t4-legend">● Rock Corrected &nbsp;&nbsp; ○ Uncorrected</div>
+      </div>
+      <div>
+        <div class="t4-curveno">Curve No. <span id="rt4698-curveNo"></span></div>
+        <div class="t4-spec">
+          <div class="t4-hdr">Test Specification:</div>
+          <div id="rt4698-testSpecLine" style="font-size:8.7px; margin-bottom:3px;"></div>
+          <div class="t4-line"><b>Preparation Method</b><span class="val" id="rt4698-prepMethod"></span></div>
+          <div class="t4-line"><b>Hammer Wt.</b><span class="val" id="rt4698-hammerWt"></span></div>
+          <div class="t4-line"><b>Hammer Drop</b><span class="val" id="rt4698-hammerDrop"></span></div>
+          <div class="t4-line"><b>Number of Layers</b><span class="val" id="rt4698-numLayers"></span></div>
+          <div class="t4-line"><b>Blows per Layer</b><span class="val" id="rt4698-blows"></span></div>
+          <div class="t4-line"><b>Mold Size</b><span class="val" id="rt4698-moldSize"></span></div>
+          <div class="t4-line"><b>Test Performed on Material Passing</b><span class="val" id="rt4698-sieve"></span></div>
+          <div class="t4-line"><b>NM / LL / PI</b><span class="val" id="rt4698-nmllpi"></span></div>
+          <div class="t4-line"><b>Sp.G. (ASTM D854)</b><span class="val" id="rt4698-spg"></span></div>
+          <div class="t4-line"><b>%&gt;3/4 in. / %&lt;No.200</b><span class="val" id="rt4698-gradation"></span></div>
+          <div class="t4-line"><b>USCS / AASHTO</b><span class="val" id="rt4698-classification"></span></div>
+          <div class="t4-line"><b>Date Sampled</b><span class="val" id="rt4698-dateSampled"></span></div>
+          <div class="t4-line"><b>Date Tested</b><span class="val" id="rt4698-dateTested"></span></div>
+          <div class="t4-line"><b>Tested By</b><span class="val" id="rt4698-testedBy"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t4-datatitle">TESTING DATA</div>
+    <table class="t4-table">
+      <thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+      <tbody id="rt4698-testingDataBody"></tbody>
+    </table>
+
+    <div class="t4-footer">
+      <div>
+        <div class="t4-fhdr">ROCK CORRECTED TEST RESULTS</div>
+        <div id="rt4698-correctedResults"></div>
+      </div>
+      <div>
+        <div class="t4-fhdr">UNCORRECTED</div>
+        <div id="rt4698-uncorrectedResults"></div>
+      </div>
+      <div>
+        <div class="t4-fhdr">Material Description</div>
+        <div id="rt4698-materialDesc" style="text-align:center;"></div>
+        <div style="margin-top:4px;"><b>Remarks:</b> <span id="rt4698-remarks"></span></div>
+      </div>
+    </div>
+
+    <div class="t4-bottombar">
+      <div><b>Project No.</b> <span id="rt4698-projectNo"></span></div>
+      <div><b>Client:</b> <span id="rt4698-client"></span></div>
+      <div><b>Project:</b> <span id="rt4698-project"></span></div>
+      <div><b>Contract:</b> <span id="rt4698-contract"></span></div>
+    </div>
+  </div>
+
+  <div class="rep-actions">
+    <button class="btn reset" onclick="closeReportT4('698')">إغلاق</button>
+    <button class="btn calc" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+</div>
+
+<script>
+let charts = {'1557':null, '698':null};
+let lastMaxPt = {'1557':null, '698':null};
+
+const AR_TO_EN = {
+  "بروكتور معدل - D1557": "Modified Proctor - D1557",
+  "بروكتور قياسي - D698": "Standard Proctor - D698",
+  "فحص بروكتور المعدل - ASTM D1557": "Modified Proctor Test - ASTM D1557",
+  "فحص بروكتور القياسي - ASTM D698": "Standard Proctor Test - ASTM D698",
+  "مطرقة 10 رطل (44.5 نيوتن) - ارتفاع سقوط 18 بوصة - 5 طبقات - طاقة دمك 2700 kN-m/m³": "10 lb (44.5 N) hammer - 18 in. drop - 5 layers - Compaction energy 2700 kN-m/m³",
+  "مطرقة 5.5 رطل (24.5 نيوتن) - ارتفاع سقوط 12 بوصة - 3 طبقات - طاقة دمك 600 kN-m/m³": "5.5 lb (24.5 N) hammer - 12 in. drop - 3 layers - Compaction energy 600 kN-m/m³",
+  "منصة القصبي للمواصفات الهندسية": "Al-Kasaby Engineering Standards Platform",
+  "بيانات المشروع (Project Information)": "Project Information",
+  "الظروف البيئية (Environmental Conditions)": "Environmental Conditions",
+  "معلومات الفحص (Test Information)": "Test Information",
+  "التواريخ والمسؤولون (Dates & Personnel)": "Dates & Personnel",
+  "ملخص النتائج (Results Summary)": "Results Summary",
+  "بيانات إضافية - نمط التقرير الثاني (Spec & Sample Condition)": "Additional Data - Report Template 2 (Spec & Sample Condition)",
+  "تصحيح الحبيبات الخشنة - ASTM D4718": "Oversize Particle Correction - ASTM D4718",
+  "بيانات التصحيح": "Correction Data",
+  "اسم المشروع (Project Name)": "Project Name",
+  "رقم العقد (Contract No.)": "Contract No.",
+  "العميل (Client)": "Client",
+  "الاستشاري (Consultant)": "Consultant",
+  "المقاول (Contractor)": "Contractor",
+  "موقع المشروع (Project Location)": "Project Location",
+  "رقم العينة (Sample ID)": "Sample ID",
+  "رقم البئر/الحفرة (Borehole / Test Pit No.)": "Borehole / Test Pit No.",
+  "وصف التربة (Soil Description)": "Soil Description",
+  "الميلاد/الكيلومتر (Chainage)": "Chainage",
+  "رقم التقرير (Report No.)": "Report No.",
+  "الرقم المرجعي للمعمل (Lab Ref. No.)": "Lab Reference No.",
+  "الصفحة (Page)": "Page",
+  "الطقس (Weather)": "Weather",
+  "درجة الحرارة المحيطة °C (Ambient Temperature)": "Ambient Temperature °C",
+  "الرطوبة النسبية % (Relative Humidity)": "Relative Humidity %",
+  "حالة الرياح (Wind Condition)": "Wind Condition",
+  "القطر الداخلي للقالب مم (Mold Diameter)": "Mold Diameter (mm)",
+  "ارتفاع القالب مم (Mold Height)": "Mold Height (mm)",
+  "وزن المطرقة (Hammer Weight)": "Hammer Weight",
+  "ارتفاع السقوط (Drop Height)": "Drop Height",
+  "عدد الطبقات (Number of Layers)": "Number of Layers",
+  "عدد الضربات لكل طبقة (Blows per Layer)": "Blows per Layer",
+  "المنخل المستخدم (Sieve Used)": "Sieve Used",
+  "تاريخ الاستلام (Date Received)": "Date Received",
+  "تاريخ الفحص (Date Tested)": "Date Tested",
+  "تاريخ التقرير (Date Reported)": "Date Reported",
+  "تم الفحص بواسطة (Tested By)": "Tested By",
+  "روجع بواسطة (Checked By)": "Checked By",
+  "اعتمد بواسطة (Approved By)": "Approved By",
+  "تصنيف التربة USCS (Soil Classification)": "Soil Classification (USCS)",
+  "ملاحظات (Remarks)": "Remarks",
+  "تاريخ الإصدار (Issue Date)": "Issue Date",
+  "نسبة الدمك المطلوبة % (Required Compaction, % of MDD)": "Required Compaction (% of MDD)",
+  "الحد الأدنى لنسبة الرطوبة % (Spec Min Moisture, اختياري)": "Spec Min Moisture % (optional)",
+  "الحد الأقصى لنسبة الرطوبة % (Spec Max Moisture, اختياري)": "Spec Max Moisture % (optional)",
+  "حالة العينة (Sample Condition)": "Sample Condition",
+  "تجهيز العينة (Sample Preparation)": "Sample Preparation",
+  "غربلة أكبر من 4.75 مم (Sieve Analysis, >4.75mm)": "Sieve Analysis (>4.75mm)",
+  "طريقة الدمك حسب المعيار (ASTM Method)": "ASTM Method",
+  "Method A — قالب 4 بوصة، منخل No.4 (يستخدم إذا الباقي على المنخل ≤ 25%)": "Method A — 4 in. mold, No. 4 sieve (usable if ≤25% retained)",
+  "Method B — قالب 4 بوصة، منخل 3/8 بوصة (يستخدم إذا الباقي على المنخل ≤ 25%)": "Method B — 4 in. mold, 3/8 in. sieve (usable if ≤25% retained)",
+  "Method C — قالب 6 بوصة، منخل 3/4 بوصة (يستخدم إذا الباقي على المنخل ≤ 30%)": "Method C — 6 in. mold, 3/4 in. sieve (usable if ≤30% retained)",
+  "حجم القالب (cm3)": "Mold Volume (cm³)",
+  "وزن القالب فارغ (": "Empty Mold Weight (",
+  "الوزن النوعي لحبيبات التربة Gs (لمنحنى التشبع)": "Specific Gravity of Solids Gs (for Saturation Curve)",
+  "وحدة وزن العينة (Mass Unit)": "Mass Unit",
+  "وحدة الكثافة (Density Unit)": "Density Unit",
+  "جرام (g)": "Grams (g)",
+  "كيلوجرام (kg)": "Kilograms (kg)",
+  "جم/سم³ (g/cm³)": "g/cm³",
+  "كيلوجرام/م³ (kg/m³)": "kg/m³",
+  "كيلونيوتن/م³ (kN/m³)": "kN/m³",
+  "شكل الرسم البياني (Chart Style)": "Chart Style",
+  "منحنى ناعم": "Smooth Curve",
+  "خطوط مستقيمة": "Straight Lines",
+  "منحنى مع تعبئة": "Filled Area",
+  "ثيم ألوان الرسم البياني (Chart Theme)": "Chart Theme",
+  "كلاسيكي (كحلي)": "Classic (Navy)",
+  "عصري (مينيمال)": "Modern (Minimal)",
+  "داكن (هندسي)": "Dark (Engineering)",
+  "غروب (تدرج دافئ)": "Sunset (Warm Gradient)",
+  "أبيض وأسود (للطباعة)": "Black & White (Print)",
+  "نمط التقرير (Report Template)": "Report Template",
+  "التقرير الاحترافي (الكلاسيكي)": "Professional Report (Classic)",
+  "التقرير الكلاسيكي": "Classic Report",
+  "تقرير النمط الثاني (مواصفات وفحص حدود)": "Template 2 (Spec & Limit Check)",
+  "تقرير النمط الثالث (لوحة قيادة عصرية)": "Template 3 (Modern Dashboard)",
+  "نسبة الحبيبات الخشنة المحجوزة على المنخل Pc (%)": "Oversize (Coarse) Fraction Pc (%)",
+  "الوزن النوعي الظاهري المشبع سطحياً للحبيبات الخشنة Gm (SSD)": "Bulk SSD Specific Gravity of Coarse Particles Gm",
+  "المحتوى الرطوبي الفعلي للحبيبات الخشنة ωc (%)": "Actual Moisture Content of Coarse Particles ωc (%)",
+  "نسبة الحبيبات الناعمة Pf (%)": "Fine Fraction Pf (%)",
+  "وزن العلبة + تربة رطبة (g)": "Wet Soil + Can (g)",
+  "وزن العلبة + تربة رطبة (kg)": "Wet Soil + Can (kg)",
+  "وزن العلبة + تربة جافة (kg)": "Dry Soil + Can (kg)",
+  "وزن العلبة فقط (kg)": "Can Weight (kg)",
+  "وزن الماء (kg)": "Water Weight (kg)",
+  "وزن التربة الجافة (kg)": "Dry Soil Weight (kg)",
+  "وزن القالب + تربة رطبة (kg)": "Mold + Wet Soil (kg)",
+  "الكثافة الرطبة (kg/m3)": "Wet Density (kg/m3)",
+  "الكثافة الجافة (kg/m3)": "Dry Density (kg/m3)",
+  "الكثافة الرطبة (kg/m³)": "Wet Density (kg/m³)",
+  "الكثافة الجافة (kg/m³)": "Dry Density (kg/m³)",
+  "الكثافة الرطبة (kN/m3)": "Wet Density (kN/m3)",
+  "الكثافة الجافة (kN/m3)": "Dry Density (kN/m3)",
+  "الكثافة الرطبة (kN/m³)": "Wet Density (kN/m³)",
+  "الكثافة الجافة (kN/m³)": "Dry Density (kN/m³)",
+  "الكثافة الرطبة (g/cm³)": "Wet Density (g/cm³)",
+  "الكثافة الجافة (g/cm³)": "Dry Density (g/cm³)",
+  "وزن العلبة + تربة جافة (g)": "Dry Soil + Can (g)",
+  "وزن العلبة فقط (g)": "Can Weight (g)",
+  "وزن الماء (g)": "Water Weight (g)",
+  "وزن التربة الجافة (g)": "Dry Soil Weight (g)",
+  "نسبة الرطوبة (%)": "Moisture Content (%)",
+  "وزن القالب + تربة رطبة (g)": "Mold + Wet Soil (g)",
+  "الكثافة الرطبة (g/cm3)": "Wet Density (g/cm3)",
+  "الكثافة الجافة (g/cm3)": "Dry Density (g/cm3)",
+  "إعادة تعيين": "Reset",
+  "احسب": "Calculate",
+  "مثال تجريبي": "Load Demo",
+  "حفظ البيانات": "Save Data",
+  "تحميل بيانات محفوظة": "Load Saved Data",
+  "إنشاء التقرير": "Generate Report",
+  "تصدير Excel احترافي": "Export Professional Excel",
+  "🔒 قفل البيانات المدخلة": "🔒 Lock Entered Data",
+  "🔓 فتح القفل": "🔓 Unlock Data",
+  "🎨 ثيم 1": "🎨 Theme 1",
+  "🎨 ثيم 2": "🎨 Theme 2",
+  "منحنى بروكتور (قبل التصحيح)": "Proctor Curve (before correction)",
+  "منحنى بعد تصحيح D4718": "Curve after D4718 Correction",
+  "منحنى التشبع (100% Saturation / ZAV)": "Saturation Curve (100% Saturation / ZAV)",
+  "⚠ أدخل 3 نقاط فحص على الأقل لحساب المنحنى الأمثل ونقطة الذروة بدقة": "⚠ Enter at least 3 test points to accurately compute the best-fit curve and peak point",
+  "الكثافة الجافة القصوى المصححة = -- , الرطوبة المثلى المصححة = -- %": "Corrected Maximum Dry Density = -- , Corrected Optimum Moisture = -- %",
+};
+
+let currentLang = 'ar';
+const EN_TO_AR = Object.fromEntries(Object.entries(AR_TO_EN).map(([a,e])=>[e,a]));
+
+function applyLangToRoot(root, lang){
+  if(!root) return;
+  const dict = (lang==='en') ? AR_TO_EN : EN_TO_AR;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const nodes = [];
+  let node;
+  while(node = walker.nextNode()) nodes.push(node);
+  nodes.forEach(n=>{
+    const trimmed = n.nodeValue.trim();
+    if(!trimmed) return;
+    if(dict[trimmed]!==undefined){
+      n.nodeValue = n.nodeValue.replace(trimmed, dict[trimmed]);
+    }
+  });
+}
+
+function toggleLang(){
+  currentLang = (currentLang==='ar') ? 'en' : 'ar';
+  applyLangToRoot(document.querySelector('.topbar'), currentLang);
+  applyLangToRoot(document.getElementById('panel-1557'), currentLang);
+  applyLangToRoot(document.getElementById('panel-698'), currentLang);
+  applyLangToRoot(document.querySelector('.footer-brand'), currentLang);
+  document.body.style.direction = (currentLang==='ar') ? 'rtl' : 'ltr';
+  const container = document.querySelector('.container');
+  if(container) container.style.textAlign = (currentLang==='ar') ? 'right' : 'left';
+  document.getElementById('langToggleBtn').textContent = (currentLang==='ar') ? 'EN / AR' : 'AR / EN';
+}
+
+let currentTheme = 1;
+function toggleTheme(){
+  currentTheme = (currentTheme===1) ? 2 : 1;
+  document.body.classList.toggle('theme-2', currentTheme===2);
+  const btn = document.getElementById('themeToggleBtn');
+  const isEn = (typeof currentLang!=='undefined' && currentLang==='en');
+  if(currentTheme===2){
+    btn.textContent = isEn ? '🎨 Theme 1' : '🎨 ثيم 1';
+  } else {
+    btn.textContent = isEn ? '🎨 Theme 2' : '🎨 ثيم 2';
+  }
+}
+
+
+const CHART_THEMES = {
+  navy: {
+    curve:'#e53935', pointFill:'#ffffff', pointBorder:'#e53935', corrected:'#1f8a5f',
+    areaFill:'rgba(229,57,53,0.15)', zav:'#5b7a9d', grid:'#e5eaf2', text:'#14213d',
+    chartBg:'#ffffff', crosshair:'rgba(90,123,166,0.55)',
+    labelBg:'rgba(255,255,255,0.9)', labelText:'#14213d'
+  },
+  modern: {
+    curve:'#0f9d78', pointFill:'#ffffff', pointBorder:'#0f9d78', corrected:'#c98a1f',
+    areaFill:'rgba(15,157,120,0.12)', zav:'#9aa5b1', grid:'#eef1f3', text:'#2d3748',
+    chartBg:'#ffffff', crosshair:'rgba(45,55,72,0.30)',
+    labelBg:'rgba(255,255,255,0.92)', labelText:'#0f9d78'
+  },
+  dark: {
+    curve:'#22e5ff', pointFill:'#0b1220', pointBorder:'#22e5ff', corrected:'#ff6ad5',
+    areaFill:'rgba(34,229,255,0.18)', zav:'#ffb300', grid:'rgba(255,255,255,0.14)', text:'#e8eef7',
+    chartBg:'#0b1220', crosshair:'rgba(255,255,255,0.25)',
+    labelBg:'rgba(11,18,32,0.85)', labelText:'#e8eef7'
+  },
+  sunset: {
+    curve:'#ff6a00', pointFill:'#ffffff', pointBorder:'#ff3d00', corrected:'#2a6f77',
+    areaFill:'rgba(255,106,0,0.15)', zav:'#7b5ea7', grid:'#fbe9e0', text:'#6d3b00',
+    chartBg:'#fffaf5', crosshair:'rgba(109,59,0,0.30)',
+    labelBg:'rgba(255,255,255,0.92)', labelText:'#6d3b00'
+  },
+  print: {
+    curve:'#222222', pointFill:'#ffffff', pointBorder:'#222222', corrected:'#666666',
+    areaFill:'rgba(0,0,0,0.08)', zav:'#666666', grid:'#dddddd', text:'#111111',
+    chartBg:'#ffffff', crosshair:'rgba(0,0,0,0.25)',
+    labelBg:'rgba(255,255,255,0.92)', labelText:'#111111'
+  }
+};
+
+function showTab(p){
+  document.getElementById('panel-1557').classList.toggle('active', p==='1557');
+  document.getElementById('panel-698').classList.toggle('active', p==='698');
+  document.getElementById('tabBtn1557').classList.toggle('active', p==='1557');
+  document.getElementById('tabBtn698').classList.toggle('active', p==='698');
+}
+
+function num(v){ v = parseFloat(v); return isNaN(v) ? null : v; }
+
+function massUnitOf(p){ return getVal('massUnit'+p) || 'g'; }
+function densityUnitOf(p){ return getVal('densityUnit'+p) || 'gcm3'; }
+function massFactorOf(p){ return massUnitOf(p)==='kg' ? 1000 : 1; } // multiply entered mass by this to get grams
+function densityFactorOf(p){
+  const u = densityUnitOf(p);
+  if(u==='kn') return 9.80665;
+  if(u==='kgm3') return 1000;
+  return 1;
+} // multiply a g/cm3 value by this to get the chosen display unit
+function massUnitLabel(p){ return massUnitOf(p); } // 'g' or 'kg'
+function densityUnitLabel(p){
+  const u = densityUnitOf(p);
+  if(u==='kn') return 'kN/m³';
+  if(u==='kgm3') return 'kg/m³';
+  return 'g/cm³';
+}
+
+function relabelUnitsInTable(tableEl, mLabel, dLabel){
+  if(!tableEl) return;
+  tableEl.querySelectorAll('th').forEach(th=>{
+    if(/\((g|kg)\)/.test(th.textContent)){
+      th.textContent = th.textContent.replace(/\((g|kg)\)/, '('+mLabel+')');
+    }
+    if(/\((g\/cm3|g\/cm³|kN\/m3|kN\/m³|Mg\/m3|Mg\/m³|kg\/m3|kg\/m³)\)/.test(th.textContent)){
+      th.textContent = th.textContent.replace(/\((g\/cm3|g\/cm³|kN\/m3|kN\/m³|Mg\/m3|Mg\/m³|kg\/m3|kg\/m³)\)/, '('+dLabel+')');
+    }
+  });
+}
+
+function applyUnitLabels(p){
+  const mLabel = massUnitLabel(p);
+  const dLabel = densityUnitLabel(p);
+  relabelUnitsInTable(document.getElementById('canTable'+p), mLabel, dLabel);
+  relabelUnitsInTable(document.getElementById('deterTable'+p), mLabel, dLabel);
+  const mew = document.getElementById('moldEmptyWeightUnit'+p);
+  if(mew) mew.textContent = mLabel;
+}
+
+// ASTM D698 / D1557 §1.3 - Method A/B/C mold, sieve, and blows-per-layer defaults
+const METHOD_DEFAULTS = {
+  A: { vol:943,  diameter:'101.6 mm', sieve:'4.75 mm (No. 4)',   blows:25, limit:25, sieveName:'No. 4 (4.75 mm)' },
+  B: { vol:943,  diameter:'101.6 mm', sieve:'9.5 mm (3/8 in.)',  blows:25, limit:25, sieveName:'3/8 in. (9.5 mm)' },
+  C: { vol:2124, diameter:'152.4 mm', sieve:'19.0 mm (3/4 in.)', blows:56, limit:30, sieveName:'3/4 in. (19.0 mm)' }
+};
+
+function applyMethodDefaults(p){
+  const method = getVal('compactionMethod'+p) || 'A';
+  const d = METHOD_DEFAULTS[method] || METHOD_DEFAULTS.A;
+  document.getElementById('moldVol'+p).value = d.vol;
+  const diaEl = document.getElementById('moldDiameter'+p);
+  const sieveEl = document.getElementById('sieveUsed'+p);
+  const blowsEl = document.getElementById('blowsPerLayer'+p);
+  if(diaEl) diaEl.value = d.diameter;
+  if(sieveEl) sieveEl.value = d.sieve;
+  if(blowsEl) blowsEl.value = d.blows;
+  calcAll(p);
+}
+
+function checkMethodLimit(p){
+  const warnEl = document.getElementById('methodWarning'+p);
+  if(!warnEl) return;
+  const method = getVal('compactionMethod'+p) || 'A';
+  const d = METHOD_DEFAULTS[method] || METHOD_DEFAULTS.A;
+  const Pc = num(getVal('pcVal'+p));
+  if(Pc!==null && Pc > d.limit){
+    warnEl.style.display = 'block';
+    warnEl.textContent = (typeof currentLang!=='undefined' && currentLang==='en')
+      ? `⚠ Oversize fraction retained on ${d.sieveName} sieve (${Pc}%) exceeds the ${d.limit}% limit allowed for Method ${method} per ASTM. Consider Method C, or apply the D4718 correction.`
+      : `⚠ نسبة الحبيبات الخشنة الباقية على منخل ${d.sieveName} (${Pc}%) أكبر من الحد المسموح لطريقة ${method} (${d.limit}%) وفقاً لـ ASTM. راجع اختيار الطريقة (استخدم Method C إن أمكن) أو طبّق تصحيح D4718.`;
+  } else {
+    warnEl.style.display = 'none';
+  }
+}
+
+function calcAll(p){
+  applyUnitLabels(p);
+  checkMethodLimit(p);
+
+  const canTable = document.getElementById('canTable'+p);
+  const deterTable = document.getElementById('deterTable'+p);
+
+  const w1 = canTable.querySelectorAll('.w1');
+  const w2 = canTable.querySelectorAll('.w2');
+  const w3 = canTable.querySelectorAll('.w3');
+  const wwCells = canTable.querySelectorAll('.ww');
+  const wdCells = canTable.querySelectorAll('.wd');
+  const moistCells = canTable.querySelectorAll('.moist');
+  const moist2Cells = deterTable.querySelectorAll('.moist2');
+
+  let moistureVals = [];
+
+  for(let i=0;i<w1.length;i++){
+    const W1 = num(w1[i].value), W2 = num(w2[i].value), W3 = num(w3[i].value);
+    if(W1!==null && W2!==null && W3!==null && (W2-W3)>0){
+      const Ww = W1 - W2;
+      const Wd = W2 - W3;
+      const moist = (Ww/Wd)*100;
+      wwCells[i].textContent = Ww.toFixed(1);
+      wdCells[i].textContent = Wd.toFixed(1);
+      moistCells[i].textContent = moist.toFixed(2);
+      moist2Cells[i].textContent = moist.toFixed(2);
+      moistureVals[i] = moist;
+    } else {
+      wwCells[i].textContent = '-';
+      wdCells[i].textContent = '-';
+      moistCells[i].textContent = '-';
+      moist2Cells[i].textContent = '-';
+      moistureVals[i] = null;
+    }
+  }
+
+  const defaultVol = (p==='698') ? 943 : 2124;
+  const vol = num(document.getElementById('moldVol'+p).value) || defaultVol;
+  const M1 = num(document.getElementById('moldEmptyWeight'+p).value);
+  const m2 = deterTable.querySelectorAll('.m2');
+  const wetdCells = deterTable.querySelectorAll('.wetd');
+  const drydCells = deterTable.querySelectorAll('.dryd');
+
+  const mf = massFactorOf(p);   // converts entered mass to grams
+  const df = densityFactorOf(p); // converts a g/cm3 value to the chosen display unit
+
+  let points = [];
+
+  for(let i=0;i<m2.length;i++){
+    const M2 = num(m2[i].value);
+    const moist = moistureVals[i];
+    if(M1!==null && M2!==null && moist!==null && (M2-M1)>0){
+      const wetDensityGcm3 = ((M2-M1)*mf)/vol;
+      const dryDensityGcm3 = wetDensityGcm3/(1+moist/100);
+      const wetDensityDisplay = wetDensityGcm3*df;
+      const dryDensityDisplay = dryDensityGcm3*df;
+      wetdCells[i].textContent = wetDensityDisplay.toFixed(3);
+      drydCells[i].textContent = dryDensityDisplay.toFixed(3);
+      points.push({x:moist, y:dryDensityDisplay});
+    } else {
+      wetdCells[i].textContent = '-';
+      drydCells[i].textContent = '-';
+    }
+  }
+
+  points.sort((a,b)=>a.x-b.x);
+  updateChart(points, p);
+}
+
+function quadFit(points){
+  const n = points.length;
+  if(n<3) return null;
+  let Sx=0,Sx2=0,Sx3=0,Sx4=0,Sy=0,Sxy=0,Sx2y=0;
+  points.forEach(p=>{
+    const x=p.x,y=p.y;
+    Sx+=x; Sx2+=x*x; Sx3+=x*x*x; Sx4+=x*x*x*x;
+    Sy+=y; Sxy+=x*y; Sx2y+=x*x*y;
+  });
+  const A=[[Sx4,Sx3,Sx2],[Sx3,Sx2,Sx],[Sx2,Sx,n]];
+  const B=[Sx2y,Sxy,Sy];
+  for(let i=0;i<3;i++){
+    let maxRow=i;
+    for(let k=i+1;k<3;k++) if(Math.abs(A[k][i])>Math.abs(A[maxRow][i])) maxRow=k;
+    [A[i],A[maxRow]]=[A[maxRow],A[i]];
+    [B[i],B[maxRow]]=[B[maxRow],B[i]];
+    for(let k=i+1;k<3;k++){
+      const f=A[k][i]/A[i][i];
+      for(let j=i;j<3;j++) A[k][j]-=f*A[i][j];
+      B[k]-=f*B[i];
+    }
+  }
+  const c=[0,0,0];
+  for(let i=2;i>=0;i--){
+    let s=B[i];
+    for(let j=i+1;j<3;j++) s-=A[i][j]*c[j];
+    c[i]=s/A[i][i];
+  }
+  return c;
+}
+
+// "nice" step size for axis ticks (1, 2, 2.5, 5 x 10^n)
+function niceStep(range, targetTicks){
+  if(range<=0) return 1;
+  const rough = range/targetTicks;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough/mag;
+  let step;
+  if(norm<1.5) step=1;
+  else if(norm<3) step=2;
+  else if(norm<7) step=5;
+  else step=10;
+  return step*mag;
+}
+
+function updateChart(points, p){
+  const ctx = document.getElementById('proctorChart'+p).getContext('2d');
+
+  if(points.length===0){
+    if(charts[p]) charts[p].destroy();
+    charts[p] = null;
+    lastMaxPt[p] = null;
+    const cle = document.getElementById('correctedLegend'+p);
+    if(cle) cle.style.display = 'none';
+    document.getElementById('resultBox'+p).textContent = 'max dry density = --  ,  OMC = -- %';
+    document.getElementById('fitWarning'+p).style.display = 'none';
+    updateD4718Correction(null, p);
+    return;
+  }
+
+  // find the peak (max dry density / OMC) using a quadratic fit purely for the
+  // result box numbers - it is NOT drawn as a separate curve anymore
+  let maxPt = null;
+  if(points.length>=3){
+    const coeffs = quadFit(points);
+    if(coeffs){
+      const [a,b,c] = coeffs;
+      if(a<0){
+        const xv = -b/(2*a);
+        const xmin = Math.min(...points.map(pt=>pt.x));
+        const xmax = Math.max(...points.map(pt=>pt.x));
+        if(xv>=xmin && xv<=xmax){
+          maxPt = {x:xv, y:a*xv*xv+b*xv+c};
+        }
+      }
+    }
+  }
+  if(!maxPt && points.length>0){
+    maxPt = points.reduce((m,pt)=> pt.y>m.y?pt:m, points[0]);
+  }
+  lastMaxPt[p] = maxPt;
+
+  // compute nice axis bounds so the grid looks clean and labels don't collide
+  const xMinData = Math.min(...points.map(pt=>pt.x));
+  const xMaxData = Math.max(...points.map(pt=>pt.x));
+  const yMinData = Math.min(...points.map(pt=>pt.y));
+  const yMaxData = Math.max(...points.map(pt=>pt.y));
+
+  const xStep = niceStep(xMaxData-xMinData || 1, 5);
+  const yStep = niceStep(yMaxData-yMinData || 0.1, 5);
+
+  const xAxisMin = Math.max(0, Math.floor((xMinData - xStep*0.6)/xStep)*xStep);
+  const xAxisMax = Math.ceil((xMaxData + xStep*1.4)/xStep)*xStep;
+  const yAxisMin = Math.floor((yMinData - yStep*0.6)/yStep)*yStep;
+  const yAxisMax = Math.ceil((yMaxData + yStep*0.6)/yStep)*yStep;
+
+  // Zero-Air-Voids / saturation curve (100% saturation line), using Gs entered by the user.
+  // gamma_d(sat) = gamma_w / (w/100 + 1/Gs)   with gamma_w = 1 g/cm3, converted to the chosen display unit
+  const Gs = num(document.getElementById('gsValue'+p).value);
+  const df = densityFactorOf(p);
+  let zavPts = [];
+  let yAxisMaxFinal = yAxisMax;
+  if(Gs && Gs>0){
+    for(let x=Math.max(0.01,xAxisMin); x<=xAxisMax; x+=(xAxisMax-xAxisMin)/60){
+      const y = (1/((x/100) + (1/Gs))) * df;
+      zavPts.push({x:x, y:y});
+    }
+  }
+
+  // D4718 corrected curve: apply the oversize-particle correction to EVERY point (not just the peak),
+  // so the corrected curve can be plotted alongside the uncorrected (raw) curve for comparison.
+  const PcChart = num(getVal('pcVal'+p));
+  const GmChart = num(getVal('gmVal'+p));
+  const hasChartCorrection = (PcChart!==null && GmChart!==null && PcChart>=0 && PcChart<100 && GmChart>0);
+  let correctedPts = [];
+  if(hasChartCorrection){
+    const PfChart = 100 - PcChart;
+    points.forEach(pt=>{
+      const y_gcm3 = pt.y / df;
+      const yCorr_gcm3 = 100 / ( (PcChart/GmChart) + (PfChart/y_gcm3) );
+      const yCorr = yCorr_gcm3 * df;
+      correctedPts.push({x:pt.x, y:yCorr});
+      if(yCorr > yAxisMaxFinal) yAxisMaxFinal = Math.ceil(yCorr/yStep)*yStep;
+    });
+  }
+
+  // Chart style selection: smooth curve (monotone), straight line segments, or filled area
+  const chartStyle = getVal('chartStyle'+p) || 'smooth';
+  const themeKey = getVal('chartTheme'+p) || 'navy';
+  const theme = CHART_THEMES[themeKey] || CHART_THEMES.navy;
+
+  let curveExtra;
+  if(chartStyle==='straight'){
+    curveExtra = { cubicInterpolationMode:'default', tension:0, fill:false, backgroundColor:theme.chartBg };
+  } else if(chartStyle==='area'){
+    curveExtra = { cubicInterpolationMode:'monotone', tension:0.35, fill:'origin', backgroundColor:theme.areaFill };
+  } else {
+    curveExtra = { cubicInterpolationMode:'monotone', tension:0.35, fill:false, backgroundColor:theme.chartBg };
+  }
+
+  // ONE single curve that passes exactly through every entered point,
+  // in order, connected point-to-point - matching the reference chart shape
+  const datasets = [
+    {
+      label:'منحنى بروكتور (قبل التصحيح)', data: points, type:'line',
+      borderColor:theme.curve,
+      borderWidth:3,
+      ...curveExtra,
+      pointRadius:5.5, pointHoverRadius:6.5,
+      pointBackgroundColor:theme.pointFill, pointBorderColor:theme.pointBorder, pointBorderWidth:2.5,
+      order:1,
+      datalabels:{
+        display:true,
+        align:'top',
+        anchor:'end',
+        offset:8,
+        clamp:true,
+        color:theme.labelText,
+        font:{ weight:'bold', size:10.5 },
+        backgroundColor:theme.labelBg,
+        borderRadius:3,
+        padding:{top:2,bottom:2,left:4,right:4},
+        formatter:function(value){ return value.y.toFixed(3); }
+      }
+    }
+  ];
+  if(hasChartCorrection && correctedPts.length>0){
+    datasets.push({
+      label:'منحنى بعد تصحيح D4718', data: correctedPts, type:'line',
+      borderColor:theme.corrected,
+      backgroundColor:theme.chartBg,
+      borderWidth:2.5,
+      cubicInterpolationMode:'monotone', tension:0.35, fill:false,
+      pointRadius:5, pointHoverRadius:6,
+      pointBackgroundColor:theme.corrected, pointBorderColor:theme.chartBg, pointBorderWidth:1.5,
+      order:0,
+      datalabels:{
+        display:true,
+        align:'bottom',
+        anchor:'start',
+        offset:8,
+        clamp:true,
+        color:theme.corrected,
+        font:{ weight:'bold', size:10 },
+        backgroundColor:theme.labelBg,
+        borderRadius:3,
+        padding:{top:2,bottom:2,left:4,right:4},
+        formatter:function(value){ return value.y.toFixed(3); }
+      }
+    });
+  }
+  if(zavPts.length>0){
+    datasets.push({
+      label:'منحنى التشبع 100%', data: zavPts, type:'line',
+      borderColor:theme.zav, backgroundColor:'transparent',
+      borderWidth:2, borderDash:[6,4], pointRadius:0, tension:0, fill:false,
+      order:2,
+      datalabels:{ display:false }
+    });
+  }
+
+  const chartBgPlugin = {
+    id:'chartBgFill'+p,
+    beforeDraw(chartInstance){
+      const {ctx:bctx, width, height} = chartInstance;
+      bctx.save();
+      bctx.fillStyle = theme.chartBg;
+      bctx.fillRect(0,0,width,height);
+      bctx.restore();
+    }
+  };
+
+  const crosshairPlugin = {
+    id:'crosshairLines'+p,
+    afterDatasetsDraw(chartInstance){
+      const {ctx:cctx, scales:{x:xScale,y:yScale}, chartArea} = chartInstance;
+      cctx.save();
+      cctx.setLineDash([3,3]);
+      cctx.lineWidth = 1;
+      cctx.strokeStyle = theme.crosshair;
+      points.forEach(pt=>{
+        const px = xScale.getPixelForValue(pt.x);
+        const py = yScale.getPixelForValue(pt.y);
+        cctx.beginPath();
+        cctx.moveTo(px, chartArea.bottom);
+        cctx.lineTo(px, py);
+        cctx.stroke();
+        cctx.beginPath();
+        cctx.moveTo(chartArea.left, py);
+        cctx.lineTo(px, py);
+        cctx.stroke();
+      });
+      if(maxPt){
+        cctx.strokeStyle = theme.zav;
+        const px = xScale.getPixelForValue(maxPt.x);
+        const py = yScale.getPixelForValue(maxPt.y);
+        cctx.beginPath();
+        cctx.moveTo(px, chartArea.bottom);
+        cctx.lineTo(px, py);
+        cctx.stroke();
+        cctx.beginPath();
+        cctx.moveTo(chartArea.left, py);
+        cctx.lineTo(px, py);
+        cctx.stroke();
+      }
+      cctx.restore();
+    }
+  };
+
+  const correctedLegendEl = document.getElementById('correctedLegend'+p);
+  if(correctedLegendEl) correctedLegendEl.style.display = hasChartCorrection ? 'inline' : 'none';
+
+  if(charts[p]) charts[p].destroy();
+  charts[p] = new Chart(ctx, {
+    type:'scatter',
+    data:{ datasets },
+    plugins:[chartBgPlugin, ChartDataLabels, crosshairPlugin],
+    options:{
+      responsive:true,
+      devicePixelRatio: 2.5,
+      layout:{ padding:{ top:26, bottom:12, left:10, right:16 } },
+      plugins:{
+        legend:{ display:false },
+        datalabels:{ display:false }
+      },
+      scales:{
+        x:{
+          type:'linear',
+          min:xAxisMin, max:xAxisMax,
+          ticks:{ stepSize:xStep, font:{ size:11 }, color:theme.text },
+          title:{display:true, text:'نسبة الرطوبة %', color:theme.text},
+          grid:{ color:theme.grid }
+        },
+        y:{
+          min:yAxisMin, max:yAxisMaxFinal,
+          ticks:{ stepSize:yStep, font:{ size:11 }, color:theme.text },
+          title:{display:true, text:'الكثافة الجافة ' + densityUnitLabel(p), color:theme.text},
+          grid:{ color:theme.grid }
+        }
+      }
+    }
+  });
+
+  const resultBox = document.getElementById('resultBox'+p);
+  if(maxPt){
+    resultBox.textContent = `max dry density = ${maxPt.y.toFixed(3)} ${densityUnitLabel(p)}  ,  OMC = ${maxPt.x.toFixed(2)} %`;
+  } else {
+    resultBox.textContent = 'max dry density = --  ,  OMC = -- %';
+  }
+  document.getElementById('fitWarning'+p).style.display = (points.length>0 && points.length<3) ? 'block' : 'none';
+
+  updateD4718Correction(maxPt, p);
+}
+
+// ASTM D4718 correction for oversize (coarse) particles removed from the compaction mold.
+// gammaD  = 100 / ( Pc/Gm + Pf/gamma_d )      [gamma_w = 1 g/cm3, Gm = bulk SG (SSD) of coarse particles]
+// omegaD  = ( Pc*omega_c + Pf*omega_f ) / 100
+function updateD4718Correction(maxPt, p){
+  const box = document.getElementById('resultBoxCorrected'+p);
+  const pfCell = document.getElementById('pfVal'+p);
+  const Pc = num(document.getElementById('pcVal'+p).value);
+  const Gm = num(document.getElementById('gmVal'+p).value);
+  const wc = num(document.getElementById('wcVal'+p).value);
+
+  if(Pc===null || Pc<0 || Pc>=100){
+    pfCell.textContent = '-';
+  } else {
+    pfCell.textContent = (100-Pc).toFixed(1);
+  }
+
+  if(!maxPt || Pc===null || Gm===null || wc===null || Pc<0 || Pc>=100 || Gm<=0){
+    box.textContent = 'الكثافة الجافة القصوى المصححة = --  ,  الرطوبة المثلى المصححة = -- %';
+    return;
+  }
+
+  const df = densityFactorOf(p);
+  const dLabel = densityUnitLabel(p);
+  const Pf = 100 - Pc;
+  const gammaD_fine_gcm3 = maxPt.y / df;   // convert display-unit value back to g/cm3 basis for the formula
+  const omega_f = maxPt.x;       // uncorrected OMC (fine fraction), %
+
+  const gammaD_gcm3 = 100 / ( (Pc/Gm) + (Pf/gammaD_fine_gcm3) );
+  const gammaD_display = gammaD_gcm3 * df;
+  const omegaD = ( Pc*wc + Pf*omega_f ) / 100;
+
+  box.textContent = `الكثافة الجافة القصوى المصححة = ${gammaD_display.toFixed(3)} ${dLabel}  ,  الرطوبة المثلى المصححة = ${omegaD.toFixed(2)} %`;
+}
+
+function resetAll(p){
+  const defaultVol = (p==='698') ? 943 : 2124;
+  document.getElementById('canTable'+p).querySelectorAll('input.cell').forEach(i=>i.value='');
+  document.getElementById('deterTable'+p).querySelectorAll('input.cell').forEach(i=>i.value='');
+  document.getElementById('moldVol'+p).value = defaultVol;
+  document.getElementById('moldEmptyWeight'+p).value = '';
+  document.getElementById('gsValue'+p).value = 2.70;
+  document.getElementById('compactionMethod'+p).value = (p==='698') ? 'A' : 'C';
+  document.getElementById('massUnit'+p).value = 'g';
+  document.getElementById('densityUnit'+p).value = 'gcm3';
+  document.getElementById('chartStyle'+p).value = 'smooth';
+  document.getElementById('chartTheme'+p).value = 'navy';
+  document.getElementById('pcVal'+p).value = '';
+  document.getElementById('gmVal'+p).value = '';
+  document.getElementById('wcVal'+p).value = '';
+  document.getElementById('pfVal'+p).textContent = '-';
+  document.getElementById('methodWarning'+p).style.display = 'none';
+  document.getElementById('canTable'+p).querySelectorAll('.calc').forEach(c=>c.textContent='-');
+  document.getElementById('deterTable'+p).querySelectorAll('.calc').forEach(c=>c.textContent='-');
+  document.getElementById('resultBox'+p).textContent = 'max dry density = --  ,  OMC = -- %';
+  document.getElementById('resultBoxCorrected'+p).textContent = 'الكثافة الجافة القصوى المصححة = --  ,  الرطوبة المثلى المصححة = -- %';
+  document.getElementById('fitWarning'+p).style.display = 'none';
+  applyUnitLabels(p);
+  if(charts[p]){ charts[p].destroy(); charts[p] = null; }
+}
+
+function loadDemo(p){
+  document.getElementById('projectName'+p).value = 'مشروع تجريبي - ردم طبقة أساس';
+  document.getElementById('sampleNo'+p).value = 'S-001';
+  document.getElementById('testDate'+p).value = new Date().toISOString().slice(0,10);
+  document.getElementById('techName'+p).value = 'الفني: محمد أحمد';
+  document.getElementById('moldVol'+p).value = 2124;
+  document.getElementById('moldEmptyWeight'+p).value = 4889.6;
+  document.getElementById('gsValue'+p).value = 2.70;
+  document.getElementById('pcVal'+p).value = 12;
+  document.getElementById('gmVal'+p).value = 2.65;
+  document.getElementById('wcVal'+p).value = 1.8;
+
+  const w1demo = (p==='698') ? ['486.5','513.6','545.4','565.8','579.4'] : ['486.5','513.6','572.4','615.8','659.4'];
+  const w2demo = (p==='698') ? ['479','498.1','526.3','545','555.2'] : ['479','498.1','546.3','578','609.2'];
+  const w3demo = ['95.1','96.2','98.1','93.3','95.0'];
+  const m2demo = (p==='698') ? ['9420','9580','9695.4','9676.4','9535'] : ['9735','9895','10044.9','10026.4','9885'];
+
+  const canTable = document.getElementById('canTable'+p);
+  const deterTable = document.getElementById('deterTable'+p);
+  const w1 = canTable.querySelectorAll('.w1');
+  const w2 = canTable.querySelectorAll('.w2');
+  const w3 = canTable.querySelectorAll('.w3');
+  const m2 = deterTable.querySelectorAll('.m2');
+
+  for(let i=0;i<5;i++){
+    w1[i].value = w1demo[i];
+    w2[i].value = w2demo[i];
+    w3[i].value = w3demo[i];
+    m2[i].value = m2demo[i];
+  }
+  calcAll(p);
+}
+
+function collectData(p){
+  const canTable = document.getElementById('canTable'+p);
+  const deterTable = document.getElementById('deterTable'+p);
+  const getVals = (table, cls) => Array.from(table.querySelectorAll('.'+cls)).map(el=>el.value);
+
+  return {
+    test: p,
+    savedAt: new Date().toISOString(),
+    projectName: document.getElementById('projectName'+p).value,
+    sampleNo: document.getElementById('sampleNo'+p).value,
+    testDate: document.getElementById('testDate'+p).value,
+    techName: document.getElementById('techName'+p).value,
+    moldVol: document.getElementById('moldVol'+p).value,
+    moldEmptyWeight: document.getElementById('moldEmptyWeight'+p).value,
+    gsValue: document.getElementById('gsValue'+p).value,
+    compactionMethod: document.getElementById('compactionMethod'+p).value,
+    moldDiameter: getVal('moldDiameter'+p),
+    sieveUsed: getVal('sieveUsed'+p),
+    blowsPerLayer: getVal('blowsPerLayer'+p),
+    massUnit: document.getElementById('massUnit'+p).value,
+    densityUnit: document.getElementById('densityUnit'+p).value,
+    chartStyle: document.getElementById('chartStyle'+p).value,
+    chartTheme: document.getElementById('chartTheme'+p).value,
+    w1: getVals(canTable,'w1'),
+    w2: getVals(canTable,'w2'),
+    w3: getVals(canTable,'w3'),
+    m2: getVals(deterTable,'m2'),
+    pcVal: document.getElementById('pcVal'+p).value,
+    gmVal: document.getElementById('gmVal'+p).value,
+    wcVal: document.getElementById('wcVal'+p).value
+  };
+}
+
+function saveData(p){
+  const testLabel = (p==='698') ? 'D698' : 'D1557';
+  const suggested = document.getElementById('sampleNo'+p).value || document.getElementById('projectName'+p).value || '';
+  const enteredName = prompt('اكتب اسم أو كود الحفظ:', suggested);
+  if(enteredName===null) return; // user cancelled
+
+  const data = collectData(p);
+  data.saveName = enteredName;
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = enteredName.toString().trim().replace(/[^a-zA-Z0-9_\u0600-\u06FF-]+/g,'_') || 'proctor';
+  a.href = url;
+  a.download = `Proctor_${testLabel}_${safeName}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function loadData(p, event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let data;
+    try{
+      data = JSON.parse(e.target.result);
+    } catch(err){
+      alert('الملف غير صالح أو تالف.');
+      event.target.value = '';
+      return;
+    }
+
+    document.getElementById('projectName'+p).value = data.projectName || '';
+    document.getElementById('sampleNo'+p).value = data.sampleNo || '';
+    document.getElementById('testDate'+p).value = data.testDate || '';
+    document.getElementById('techName'+p).value = data.techName || '';
+    document.getElementById('moldVol'+p).value = data.moldVol || (p==='698' ? 943 : 2124);
+    document.getElementById('moldEmptyWeight'+p).value = data.moldEmptyWeight || '';
+    document.getElementById('gsValue'+p).value = data.gsValue || 2.70;
+    document.getElementById('compactionMethod'+p).value = data.compactionMethod || (p==='698' ? 'A' : 'C');
+    if(data.moldDiameter) document.getElementById('moldDiameter'+p).value = data.moldDiameter;
+    if(data.sieveUsed) document.getElementById('sieveUsed'+p).value = data.sieveUsed;
+    if(data.blowsPerLayer) document.getElementById('blowsPerLayer'+p).value = data.blowsPerLayer;
+    document.getElementById('massUnit'+p).value = data.massUnit || 'g';
+    document.getElementById('densityUnit'+p).value = data.densityUnit || 'gcm3';
+    document.getElementById('chartStyle'+p).value = data.chartStyle || 'smooth';
+    document.getElementById('chartTheme'+p).value = data.chartTheme || 'navy';
+    document.getElementById('pcVal'+p).value = data.pcVal || '';
+    document.getElementById('gmVal'+p).value = data.gmVal || '';
+    document.getElementById('wcVal'+p).value = data.wcVal || '';
+
+    const canTable = document.getElementById('canTable'+p);
+    const deterTable = document.getElementById('deterTable'+p);
+    const setVals = (table, cls, arr) => {
+      const els = table.querySelectorAll('.'+cls);
+      els.forEach((el,i)=>{ el.value = (arr && arr[i]!==undefined) ? arr[i] : ''; });
+    };
+    setVals(canTable, 'w1', data.w1);
+    setVals(canTable, 'w2', data.w2);
+    setVals(canTable, 'w3', data.w3);
+    setVals(deterTable, 'm2', data.m2);
+
+    calcAll(p);
+    event.target.value = '';
+  };
+  reader.onerror = function(){
+    alert('تعذّرت قراءة الملف.');
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function getVal(id){
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+function rowsHtml(labelsAndValues){
+  return labelsAndValues.map(([label,value])=>
+    `<div class="rep-row"><div class="rep-label">${label}</div><div class="rep-sep">:</div><div class="rep-value">${value || '-'}</div></div>`
+  ).join('');
+}
+
+function buildReportGeneric(p, idPrefix, testMethodLabel, energyLabel){
+  const g = (suffix) => idPrefix + suffix; // element id helper, e.g. 'rp' + '-reportNo' or 'rp698' + '-reportNo'
+  const mLabel = massUnitLabel(p);
+  const dLabel = densityUnitLabel(p);
+  const df = densityFactorOf(p);
+
+  relabelUnitsInTable(document.getElementById('repMoistureTable'+p), mLabel, dLabel);
+  relabelUnitsInTable(document.getElementById('repCompactionTable'+p), mLabel, dLabel);
+
+  document.getElementById(g('-reportNo')).textContent = getVal('reportNo'+p) || '-';
+  document.getElementById(g('-labRefNo')).textContent = getVal('labRefNo'+p) || '-';
+  document.getElementById(g('-pageNo')).textContent = getVal('pageNo'+p) || '1 of 1';
+
+  document.getElementById(g('-projectInfo')).innerHTML = rowsHtml([
+    ['Project Name', getVal('projectName'+p)],
+    ['Contract No.', getVal('contractNo'+p)],
+    ['Client', getVal('clientName'+p)],
+    ['Consultant', getVal('consultantName'+p)],
+    ['Contractor', getVal('contractorName'+p)],
+    ['Project Location', getVal('projectLocation'+p)],
+    ['Sample ID', getVal('sampleNo'+p)],
+    ['Borehole / Test Pit No.', getVal('boreholeNo'+p)],
+    ['Soil Description', getVal('soilDescription'+p)],
+    ['Chainage', getVal('chainage'+p)]
+  ]);
+
+  document.getElementById(g('-envInfo')).innerHTML = rowsHtml([
+    ['Weather', getVal('weather'+p)],
+    ['Ambient Temperature', getVal('ambientTemp'+p) ? getVal('ambientTemp'+p)+' °C' : ''],
+    ['Relative Humidity', getVal('relativeHumidity'+p) ? getVal('relativeHumidity'+p)+' %' : ''],
+    ['Wind Condition', getVal('windCondition'+p)]
+  ]);
+
+  document.getElementById(g('-datesInfo')).innerHTML = rowsHtml([
+    ['Date Received', getVal('dateReceived'+p)],
+    ['Date Tested', getVal('testDate'+p)],
+    ['Date Reported', getVal('dateReported'+p)],
+    ['Tested By', getVal('techName'+p)],
+    ['Checked By', getVal('checkedBy'+p)],
+    ['Approved By', getVal('approvedBy'+p)]
+  ]);
+
+  document.getElementById(g('-testInfo')).innerHTML = rowsHtml([
+    ['Test Method', testMethodLabel],
+    ['Mold Volume', getVal('moldVol'+p) ? getVal('moldVol'+p)+' cm³' : ''],
+    ['Mold Diameter', getVal('moldDiameter'+p)],
+    ['Mold Height', getVal('moldHeight'+p)],
+    ['Hammer Weight', getVal('hammerWeight'+p)],
+    ['Drop Height', getVal('dropHeight'+p)],
+    ['Number of Layers', getVal('numLayers'+p)],
+    ['Blows per Layer', getVal('blowsPerLayer'+p)],
+    ['Compaction Energy', energyLabel],
+    ['Sieve Used', getVal('sieveUsed'+p)]
+  ]);
+
+  const maxPt = lastMaxPt[p];
+  const mddText = maxPt ? maxPt.y.toFixed(3)+' '+dLabel : '--';
+  const omcText = maxPt ? maxPt.x.toFixed(2)+' %' : '--';
+  document.getElementById(g('-resultsInfo')).innerHTML = rowsHtml([
+    ['Maximum Dry Density (MDD)', mddText],
+    ['Optimum Moisture Content (OMC)', omcText],
+    ['Soil Classification (USCS)', getVal('soilClassification'+p)],
+    ['Remarks', getVal('remarks'+p)]
+  ]);
+  document.getElementById(g('-mddBox')).innerHTML = `MDD = ${mddText}<br>OMC = ${omcText}`;
+
+  // Moisture content table - read the values already computed by calcAll into the working tables
+  const canTable = document.getElementById('canTable'+p);
+  const w1 = canTable.querySelectorAll('.w1');
+  const w2 = canTable.querySelectorAll('.w2');
+  const w3 = canTable.querySelectorAll('.w3');
+  const wwCells = canTable.querySelectorAll('.ww');
+  const wdCells = canTable.querySelectorAll('.wd');
+  const moistCells = canTable.querySelectorAll('.moist');
+  let moistureBodyRows = [];
+  for(let i=0;i<w1.length;i++){
+    moistureBodyRows.push(`<tr>
+      <td>${i+1}</td>
+      <td>${w1[i].value || '-'}</td>
+      <td>${w2[i].value || '-'}</td>
+      <td>${w3[i].value || '-'}</td>
+      <td>${wwCells[i].textContent}</td>
+      <td>${wdCells[i].textContent}</td>
+      <td>${moistCells[i].textContent}</td>
+    </tr>`);
+  }
+  document.getElementById(g('-moistureTableBody')).innerHTML = moistureBodyRows.join('');
+
+  // Compaction results table, including per-row D4718 corrected dry density where possible
+  const deterTable = document.getElementById('deterTable'+p);
+  const m2 = deterTable.querySelectorAll('.m2');
+  const wetdCells = deterTable.querySelectorAll('.wetd');
+  const moist2Cells = deterTable.querySelectorAll('.moist2');
+  const drydCells = deterTable.querySelectorAll('.dryd');
+  const M1 = num(getVal('moldEmptyWeight'+p));
+  const Pc = num(getVal('pcVal'+p));
+  const Gm = num(getVal('gmVal'+p));
+  let compactionBodyRows = [];
+  for(let i=0;i<m2.length;i++){
+    const dryVal = num(drydCells[i].textContent); // already in the chosen display unit
+    let correctedText = '-';
+    if(dryVal!==null && Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0){
+      const Pf = 100 - Pc;
+      const dryVal_gcm3 = dryVal / df;
+      const corrected_gcm3 = 100 / ( (Pc/Gm) + (Pf/dryVal_gcm3) );
+      correctedText = (corrected_gcm3*df).toFixed(3);
+    } else if(dryVal!==null){
+      correctedText = dryVal.toFixed(3);
+    }
+    compactionBodyRows.push(`<tr>
+      <td>${i+1}</td>
+      <td>${m2[i].value || '-'}</td>
+      <td>${getVal('moldEmptyWeight'+p) || '-'}</td>
+      <td>${(M1!==null && num(m2[i].value)!==null) ? (num(m2[i].value)-M1).toFixed(1) : '-'}</td>
+      <td>${wetdCells[i].textContent}</td>
+      <td>${moist2Cells[i].textContent}</td>
+      <td>${drydCells[i].textContent}</td>
+      <td>${correctedText}</td>
+    </tr>`);
+  }
+  document.getElementById(g('-compactionTableBody')).innerHTML = compactionBodyRows.join('');
+
+  // Snapshot of the live Proctor curve chart
+  const canvas = document.getElementById('proctorChart'+p);
+  try{
+    document.getElementById(g('-chartImg')).src = canvas.toDataURL('image/png');
+  } catch(e){
+    document.getElementById(g('-chartImg')).removeAttribute('src');
+  }
+
+  document.getElementById(g('-remarks')).textContent = getVal('remarks'+p) || '-';
+  document.getElementById(g('-sign-tested')).textContent = getVal('techName'+p) || '-';
+  document.getElementById(g('-sign-checked')).textContent = getVal('checkedBy'+p) || '-';
+  document.getElementById(g('-sign-approved')).textContent = getVal('approvedBy'+p) || '-';
+  document.getElementById(g('-sign-date')).textContent = getVal('dateReported'+p) || getVal('testDate'+p) || '-';
+
+  document.getElementById('reportOverlay'+p).style.display = 'block';
+  document.body.classList.add('report-mode');
+  window.scrollTo(0,0);
+}
+
+function buildReport1557(){
+  buildReportGeneric('1557', 'rp', 'ASTM D1557 (Modified Proctor)', '2700 kN-m/m³');
+}
+
+function buildReport698(){
+  buildReportGeneric('698', 'rp698', 'ASTM D698 (Standard Proctor)', '600 kN-m/m³');
+}
+
+function closeReport1557(){
+  document.getElementById('reportOverlay1557').style.display = 'none';
+  document.body.classList.remove('report-mode');
+}
+
+function closeReport698(){
+  document.getElementById('reportOverlay698').style.display = 'none';
+  document.body.classList.remove('report-mode');
+}
+
+function generateReport(p){
+  const tmpl = getVal('reportTemplate'+p) || 'classic';
+  if(tmpl === 'template2'){
+    if(p==='1557') buildTemplate2ReportGeneric('1557','rt2','ASTM D1557 (Modified Proctor)','2700 kN-m/m³');
+    else buildTemplate2ReportGeneric('698','rt2698','ASTM D698 (Standard Proctor)','600 kN-m/m³');
+  } else if(tmpl === 'template3'){
+    if(p==='1557') buildTemplate3ReportGeneric('1557','rt3','2700 kN-m/m³');
+    else buildTemplate3ReportGeneric('698','rt3698','600 kN-m/m³');
+  } else if(tmpl === 'template4'){
+    if(p==='1557') buildTemplate4ReportGeneric('1557','rt4','D1557');
+    else buildTemplate4ReportGeneric('698','rt4698','D698');
+  } else {
+    if(p==='1557') buildReport1557();
+    else buildReport698();
+  }
+}
+
+function closeReportT2(p){
+  const idName = (p==='1557') ? 'reportOverlayT2_1557' : 'reportOverlayT2_698';
+  document.getElementById(idName).style.display = 'none';
+  document.body.classList.remove('report-mode');
+}
+
+function closeReportT3(p){
+  const idName = (p==='1557') ? 'reportOverlayT3_1557' : 'reportOverlayT3_698';
+  document.getElementById(idName).style.display = 'none';
+  document.body.classList.remove('report-mode');
+}
+
+function closeReportT4(p){
+  const idName = (p==='1557') ? 'reportOverlayT4_1557' : 'reportOverlayT4_698';
+  document.getElementById(idName).style.display = 'none';
+  document.body.classList.remove('report-mode');
+}
+
+function t2RowsHtml(labelsAndValues){
+  return labelsAndValues.map(([label,value])=>
+    `<div class="t2-row"><div class="t2-label">${label}</div><div class="t2-sep">:</div><div class="t2-value">${(value===0?'0':value) || '-'}</div></div>`
+  ).join('');
+}
+
+function t2RoundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+// Dedicated chart renderer for Report Template 2: solid blue curve, hollow peak marker,
+// crosshair only at the peak, and dark axis-title "badges" - matching the reference layout.
+function renderTemplate2ChartImage(points, maxPt, dLabel, correctedPts){
+  correctedPts = correctedPts || [];
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = 900; tmpCanvas.height = 460;
+  tmpCanvas.style.position = 'fixed';
+  tmpCanvas.style.left = '-9999px';
+  tmpCanvas.style.top = '-9999px';
+  document.body.appendChild(tmpCanvas);
+
+  const allPts = points.concat(correctedPts);
+  const xVals = allPts.map(pt=>pt.x);
+  const yVals = allPts.map(pt=>pt.y);
+  const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
+  const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+  const xStep = niceStep(xMax-xMin || 1, 5);
+  const yStep = niceStep(yMax-yMin || 0.1, 5);
+  const xAxisMin = Math.max(0, Math.floor((xMin - xStep*0.6)/xStep)*xStep);
+  const xAxisMax = Math.ceil((xMax + xStep*0.6)/xStep)*xStep;
+  const yAxisMin = Math.floor((yMin - yStep*0.6)/yStep)*yStep;
+  const yAxisMax = Math.ceil((yMax + yStep*0.6)/yStep)*yStep;
+
+  const badgePlugin = {
+    id:'t2AxisBadges',
+    afterDraw(chart){
+      const {ctx, chartArea} = chart;
+      ctx.save();
+      ctx.font = 'bold 13px Tahoma';
+      const xLabel = 'Moisture Content (%)';
+      const xw = ctx.measureText(xLabel).width + 24;
+      const xBadgeX = chartArea.left + (chartArea.right-chartArea.left)/2 - xw/2;
+      const xBadgeY = chart.height - 28;
+      ctx.fillStyle = '#14213d';
+      t2RoundRect(ctx, xBadgeX, xBadgeY, xw, 20, 5);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(xLabel, xBadgeX+xw/2, xBadgeY+10);
+
+      const yLabel = 'Dry Density ('+dLabel+')';
+      const yw = ctx.measureText(yLabel).width + 24;
+      ctx.save();
+      ctx.translate(16, chartArea.top + (chartArea.bottom-chartArea.top)/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillStyle = '#14213d';
+      t2RoundRect(ctx, -yw/2, -10, yw, 20, 5);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+      ctx.restore();
+    }
+  };
+
+  const peakCrosshair = {
+    id:'t2PeakCrosshair',
+    afterDatasetsDraw(chart){
+      if(!maxPt) return;
+      const {ctx, scales:{x:xs,y:ys}, chartArea} = chart;
+      ctx.save();
+      ctx.setLineDash([5,4]);
+      ctx.strokeStyle = '#c0392b';
+      ctx.lineWidth = 1.3;
+      const px = xs.getPixelForValue(maxPt.x);
+      const py = ys.getPixelForValue(maxPt.y);
+      ctx.beginPath(); ctx.moveTo(px, chartArea.bottom); ctx.lineTo(px, py); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(chartArea.left, py); ctx.lineTo(px, py); ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  const mddBoxPlugin = {
+    id:'t2MddBox',
+    afterDraw(chart){
+      if(!maxPt) return;
+      const {ctx, chartArea} = chart;
+      const lines = [`MDD = ${maxPt.y.toFixed(3)} ${dLabel}`, `OMC = ${maxPt.x.toFixed(2)} %`];
+      ctx.save();
+      ctx.font = 'bold 13px Tahoma';
+      const textW = Math.max(...lines.map(l=>ctx.measureText(l).width));
+      const boxW = textW + 24, boxH = 46;
+      const boxX = chartArea.right - boxW - 14;
+      const boxY = chartArea.bottom - boxH - 14;
+      ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      t2RoundRect(ctx, boxX, boxY, boxW, boxH, 5);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#c0392b';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(lines[0], boxX+12, boxY+16);
+      ctx.fillText(lines[1], boxX+12, boxY+32);
+      ctx.restore();
+    }
+  };
+
+  const datasets = [
+    {
+      label:'Proctor (Before Correction)', data: points, type:'line',
+      borderColor:'#1a56b0', backgroundColor:'#ffffff',
+      borderWidth:2.5, tension:0.35, cubicInterpolationMode:'monotone', fill:false,
+      pointRadius:5, pointBackgroundColor:'#1a56b0', pointBorderColor:'#1a56b0', pointBorderWidth:1,
+      order:1
+    }
+  ];
+  if(correctedPts.length>0){
+    datasets.push({
+      label:'After D4718 Correction', data: correctedPts, type:'line',
+      borderColor:'#1f8a5f', backgroundColor:'#ffffff',
+      borderWidth:2.2, tension:0.35, cubicInterpolationMode:'monotone', fill:false,
+      pointRadius:4.5, pointBackgroundColor:'#1f8a5f', pointBorderColor:'#1f8a5f', pointBorderWidth:1,
+      order:1.5
+    });
+  }
+  if(maxPt){
+    datasets.push({
+      label:'Peak', data:[maxPt], type:'scatter',
+      pointBackgroundColor:'#ffffff', pointBorderColor:'#1a56b0', pointBorderWidth:2.5, pointRadius:7,
+      order:0
+    });
+  }
+
+  const tmpChart = new Chart(tmpCanvas.getContext('2d'), {
+    type:'scatter',
+    data:{ datasets },
+    plugins:[badgePlugin, peakCrosshair, mddBoxPlugin],
+    options:{
+      responsive:false,
+      animation:false,
+      layout:{ padding:{ top:16, bottom:38, left:46, right:16 } },
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ type:'linear', min:xAxisMin, max:xAxisMax, ticks:{stepSize:xStep, font:{size:11}}, title:{display:false}, grid:{color:'#e5e5e5'} },
+        y:{ min:yAxisMin, max:yAxisMax, ticks:{stepSize:yStep, font:{size:11}}, title:{display:false}, grid:{color:'#e5e5e5'} }
+      }
+    }
+  });
+
+  const dataUrl = tmpCanvas.toDataURL('image/png');
+  tmpChart.destroy();
+  document.body.removeChild(tmpCanvas);
+  return dataUrl;
+}
+
+function buildTemplate2ReportGeneric(p, idPrefix, testMethodLabel, energyLabel){
+  const g = (suffix) => idPrefix + suffix;
+  const dLabel = densityUnitLabel(p);
+  const df = densityFactorOf(p);
+
+  document.getElementById(g('-reportNo')).textContent = getVal('reportNo'+p) || '-';
+  document.getElementById(g('-labRefNo')).textContent = getVal('labRefNo'+p) || '-';
+  document.getElementById(g('-issueDate')).textContent = getVal('issueDate'+p) || '-';
+  document.getElementById(g('-pageNo')).textContent = getVal('pageNo'+p) || '1 of 1';
+
+  document.getElementById(g('-projectInfo')).innerHTML = t2RowsHtml([
+    ['Project Name', getVal('projectName'+p)],
+    ['Contract No.', getVal('contractNo'+p)],
+    ['Client', getVal('clientName'+p)],
+    ['Consultant', getVal('consultantName'+p)],
+    ['Contractor', getVal('contractorName'+p)],
+    ['Project Location', getVal('projectLocation'+p)],
+    ['Sample ID', getVal('sampleNo'+p)],
+    ['Borehole / Test Pit No.', getVal('boreholeNo'+p)],
+    ['Soil Description', getVal('soilDescription'+p)],
+    ['Chainage', getVal('chainage'+p)]
+  ]);
+
+  document.getElementById(g('-testInfo')).innerHTML = t2RowsHtml([
+    ['Test Method', testMethodLabel],
+    ['Mold Volume', getVal('moldVol'+p) ? getVal('moldVol'+p)+' cm³' : ''],
+    ['Mold Diameter', getVal('moldDiameter'+p)],
+    ['Mold Height', getVal('moldHeight'+p)],
+    ['Hammer Weight', getVal('hammerWeight'+p)],
+    ['Drop Height', getVal('dropHeight'+p)],
+    ['Number of Layers', getVal('numLayers'+p)],
+    ['Blows per Layer', getVal('blowsPerLayer'+p)],
+    ['Compaction Energy', energyLabel],
+    ['Sieve Used', getVal('sieveUsed'+p)]
+  ]);
+
+  document.getElementById(g('-envInfo')).innerHTML = t2RowsHtml([
+    ['Weather', getVal('weather'+p)],
+    ['Ambient Temperature', getVal('ambientTemp'+p) ? getVal('ambientTemp'+p)+' °C' : ''],
+    ['Relative Humidity', getVal('relativeHumidity'+p) ? getVal('relativeHumidity'+p)+' %' : ''],
+    ['Wind Condition', getVal('windCondition'+p)]
+  ]);
+
+  document.getElementById(g('-datesInfo')).innerHTML = t2RowsHtml([
+    ['Date Received', getVal('dateReceived'+p)],
+    ['Date Tested', getVal('testDate'+p)],
+    ['Date Reported', getVal('dateReported'+p)]
+  ]);
+
+  document.getElementById(g('-personnel')).innerHTML = `
+    <div><b>Tested By (Technician):</b> ${getVal('techName'+p) || '-'}</div>
+    <div><b>Checked By (Engineer):</b> ${getVal('checkedBy'+p) || '-'}</div>
+    <div><b>Approved By (Manager):</b> ${getVal('approvedBy'+p) || '-'}</div>
+  `;
+
+  // Moisture content table with optional specification pass/fail per trial
+  const canTable = document.getElementById('canTable'+p);
+  const w1 = canTable.querySelectorAll('.w1');
+  const w2 = canTable.querySelectorAll('.w2');
+  const w3 = canTable.querySelectorAll('.w3');
+  const wwCells = canTable.querySelectorAll('.ww');
+  const wdCells = canTable.querySelectorAll('.wd');
+  const moistCells = canTable.querySelectorAll('.moist');
+  const specMin = num(getVal('specMoistMin'+p));
+  const specMax = num(getVal('specMoistMax'+p));
+  let moistureRows = [];
+  for(let i=0;i<w1.length;i++){
+    const moistVal = num(moistCells[i].textContent);
+    let pf = '-', pfClass = '';
+    if(specMin!==null && specMax!==null && moistVal!==null){
+      const ok = moistVal>=specMin && moistVal<=specMax;
+      pf = ok ? 'PASS':'FAIL'; pfClass = ok?'pass':'fail';
+    }
+    moistureRows.push(`<tr>
+      <td>${i+1}</td>
+      <td>${w1[i].value || '-'}</td>
+      <td>${w2[i].value || '-'}</td>
+      <td>${w3[i].value || '-'}</td>
+      <td>${wwCells[i].textContent}</td>
+      <td>${wdCells[i].textContent}</td>
+      <td>${moistCells[i].textContent}</td>
+      <td>${specMin!==null?specMin.toFixed(1):'-'}</td>
+      <td>${specMax!==null?specMax.toFixed(1):'-'}</td>
+      <td class="${pfClass}">${pf}</td>
+    </tr>`);
+  }
+  document.getElementById(g('-moistureTableBody')).innerHTML = moistureRows.join('');
+  document.getElementById(g('-moistureNote')).textContent = (specMin===null || specMax===null)
+    ? 'Note: No moisture content specification limits provided.'
+    : `Note: Moisture content specification limits: ${specMin.toFixed(1)}% - ${specMax.toFixed(1)}%.`;
+
+  // Compaction results table with D4718 correction + minimum-compaction spec pass/fail
+  const deterTable = document.getElementById('deterTable'+p);
+  const m2 = deterTable.querySelectorAll('.m2');
+  const wetdCells = deterTable.querySelectorAll('.wetd');
+  const moist2Cells = deterTable.querySelectorAll('.moist2');
+  const drydCells = deterTable.querySelectorAll('.dryd');
+  const M1 = num(getVal('moldEmptyWeight'+p));
+  const Pc = num(getVal('pcVal'+p));
+  const Gm = num(getVal('gmVal'+p));
+  const reqPct = num(getVal('reqCompactionPct'+p)) || 95;
+  const maxPt = lastMaxPt[p];
+  const minDryDensity = maxPt ? (maxPt.y*reqPct/100) : null;
+
+  let compactionRows = [];
+  let anyFail = false, anyPass = false;
+  for(let i=0;i<m2.length;i++){
+    const dryVal = num(drydCells[i].textContent);
+    let correctedVal = dryVal;
+    if(dryVal!==null && Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0){
+      const Pf = 100-Pc;
+      const dryVal_gcm3 = dryVal/df;
+      const corrected_gcm3 = 100/((Pc/Gm)+(Pf/dryVal_gcm3));
+      correctedVal = corrected_gcm3*df;
+    }
+    let pf = '-', pfClass = '';
+    if(correctedVal!==null && minDryDensity!==null){
+      const ok = correctedVal >= minDryDensity;
+      pf = ok?'PASS':'FAIL'; pfClass = ok?'pass':'fail';
+      if(ok) anyPass=true; else anyFail=true;
+    }
+    compactionRows.push(`<tr>
+      <td>${i+1}</td>
+      <td>${m2[i].value || '-'}</td>
+      <td>${getVal('moldEmptyWeight'+p) || '-'}</td>
+      <td>${(M1!==null && num(m2[i].value)!==null) ? (num(m2[i].value)-M1).toFixed(1) : '-'}</td>
+      <td>${wetdCells[i].textContent}</td>
+      <td>${moist2Cells[i].textContent}</td>
+      <td>${drydCells[i].textContent}</td>
+      <td>${correctedVal!==null?correctedVal.toFixed(3):'-'}</td>
+      <td>${minDryDensity!==null?minDryDensity.toFixed(3):'-'}</td>
+      <td class="${pfClass}">${pf}</td>
+    </tr>`);
+  }
+  document.getElementById(g('-compactionTableBody')).innerHTML = compactionRows.join('');
+  document.getElementById(g('-compactionNote')).innerHTML =
+    `* Required compaction: ${reqPct}% of Maximum Dry Density (MDD).<br>* Corrected dry density calculated in accordance with ASTM D4718 (Correction for Oversize Particles).`;
+
+  // Chart (dedicated Template-2 style rendering) - includes both the raw (uncorrected) curve
+  // and, when D4718 data is available, the corrected curve for direct comparison.
+  let points = [];
+  let correctedPtsT2 = [];
+  const hasCorrT2 = (Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0);
+  for(let i=0;i<m2.length;i++){
+    const x = num(moist2Cells[i].textContent);
+    const y = num(drydCells[i].textContent);
+    if(x!==null && y!==null){
+      points.push({x,y});
+      if(hasCorrT2){
+        const Pf = 100-Pc;
+        const y_gcm3 = y/df;
+        const yCorr = (100/((Pc/Gm)+(Pf/y_gcm3)))*df;
+        correctedPtsT2.push({x, y:yCorr});
+      }
+    }
+  }
+  points.sort((a,b)=>a.x-b.x);
+  correctedPtsT2.sort((a,b)=>a.x-b.x);
+  if(points.length>0){
+    document.getElementById(g('-chartImg')).src = renderTemplate2ChartImage(points, maxPt, dLabel, correctedPtsT2);
+  } else {
+    document.getElementById(g('-chartImg')).removeAttribute('src');
+  }
+
+  const mddText = maxPt ? maxPt.y.toFixed(3)+' '+dLabel : '--';
+  const omcText = maxPt ? maxPt.x.toFixed(2)+' %' : '--';
+  let statusText = '-', statusClass = '';
+  if(minDryDensity!==null && (anyPass || anyFail)){
+    statusText = anyFail ? 'FAIL' : 'PASS';
+    statusClass = anyFail ? 't2-status-fail' : 't2-status-pass';
+  }
+  document.getElementById(g('-keyResults')).innerHTML = t2RowsHtml([
+    ['Maximum Dry Density (MDD)', mddText],
+    ['Optimum Moisture Content (OMC)', omcText],
+    ['Soil Classification (USCS)', getVal('soilClassification'+p)],
+    ['Test Method', testMethodLabel.split(' (')[0]],
+    ['Compaction Energy', energyLabel],
+    ['Sieve Used', getVal('sieveUsed'+p)],
+    ['Status', `<span class="${statusClass}">${statusText}</span>`]
+  ]);
+
+  document.getElementById(g('-sampleCondition')).innerHTML = t2RowsHtml([
+    ['Sample Condition', getVal('sampleCondition'+p)],
+    ['Sample Preparation', getVal('samplePrep'+p)],
+    ['Sieve Analysis (>4.75mm)', getVal('sieveAnalysisNote'+p)]
+  ]);
+
+  document.getElementById(g('-remarks')).textContent = getVal('remarks'+p) || '-';
+
+  document.getElementById('reportOverlayT2_'+p).style.display = 'block';
+  document.body.classList.add('report-mode');
+  window.scrollTo(0,0);
+}
+
+function t3RowsHtml(labelsAndValues){
+  return labelsAndValues.map(([label,value])=>
+    `<div class="t3-row"><div class="t3-label">${label}</div><div class="t3-value">${(value===0?'0':value) || '-'}</div></div>`
+  ).join('');
+}
+
+function buildTemplate3ReportGeneric(p, idPrefix, energyLabel){
+  const g = (suffix) => idPrefix + suffix;
+  const dLabel = densityUnitLabel(p);
+  const df = densityFactorOf(p);
+  const testMethodLabel = (p==='698') ? 'ASTM D698 (Standard Proctor)' : 'ASTM D1557 (Modified Proctor)';
+
+  document.getElementById(g('-reportNo')).textContent = getVal('reportNo'+p) || '-';
+  document.getElementById(g('-sampleId')).textContent = getVal('sampleNo'+p) || '-';
+  document.getElementById(g('-dateTested')).textContent = getVal('testDate'+p) || '-';
+  document.getElementById(g('-pageNo')).textContent = getVal('pageNo'+p) || '1 of 1';
+
+  document.getElementById(g('-projectInfo')).innerHTML = t3RowsHtml([
+    ['Project Name', getVal('projectName'+p)],
+    ['Client', getVal('clientName'+p)],
+    ['Contractor', getVal('contractorName'+p)],
+    ['Location', getVal('projectLocation'+p)],
+    ['Borehole No.', getVal('boreholeNo'+p)],
+    ['Soil Description', getVal('soilDescription'+p)]
+  ]);
+
+  document.getElementById(g('-testInfo')).innerHTML = t3RowsHtml([
+    ['Method', testMethodLabel],
+    ['Mold Volume', getVal('moldVol'+p) ? getVal('moldVol'+p)+' cm³' : ''],
+    ['Hammer / Drop', (getVal('hammerWeight'+p)||'-') + ' / ' + (getVal('dropHeight'+p)||'-')],
+    ['Layers / Blows', (getVal('numLayers'+p)||'-') + ' / ' + (getVal('blowsPerLayer'+p)||'-')],
+    ['Compaction Energy', energyLabel],
+    ['Sieve Used', getVal('sieveUsed'+p)]
+  ]);
+
+  document.getElementById(g('-personnel')).innerHTML = t3RowsHtml([
+    ['Tested By', getVal('techName'+p)],
+    ['Checked By', getVal('checkedBy'+p)],
+    ['Approved By', getVal('approvedBy'+p)],
+    ['Date Reported', getVal('dateReported'+p)]
+  ]);
+
+  // Moisture table
+  const canTable = document.getElementById('canTable'+p);
+  const w1 = canTable.querySelectorAll('.w1');
+  const w2 = canTable.querySelectorAll('.w2');
+  const w3 = canTable.querySelectorAll('.w3');
+  const wwCells = canTable.querySelectorAll('.ww');
+  const wdCells = canTable.querySelectorAll('.wd');
+  const moistCells = canTable.querySelectorAll('.moist');
+  let moistureRows = [];
+  for(let i=0;i<w1.length;i++){
+    moistureRows.push(`<tr>
+      <td>${i+1}</td><td>${w1[i].value||'-'}</td><td>${w2[i].value||'-'}</td><td>${w3[i].value||'-'}</td>
+      <td>${wwCells[i].textContent}</td><td>${wdCells[i].textContent}</td><td>${moistCells[i].textContent}</td>
+    </tr>`);
+  }
+  document.getElementById(g('-moistureTableBody')).innerHTML = moistureRows.join('');
+
+  // Compaction table + D4718 correction
+  const deterTable = document.getElementById('deterTable'+p);
+  const m2 = deterTable.querySelectorAll('.m2');
+  const wetdCells = deterTable.querySelectorAll('.wetd');
+  const moist2Cells = deterTable.querySelectorAll('.moist2');
+  const drydCells = deterTable.querySelectorAll('.dryd');
+  const M1 = num(getVal('moldEmptyWeight'+p));
+  const Pc = num(getVal('pcVal'+p));
+  const Gm = num(getVal('gmVal'+p));
+  let compactionRows = [];
+  for(let i=0;i<m2.length;i++){
+    const dryVal = num(drydCells[i].textContent);
+    let correctedText = '-';
+    if(dryVal!==null && Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0){
+      const Pf = 100-Pc;
+      const dryVal_gcm3 = dryVal/df;
+      const corrected_gcm3 = 100/((Pc/Gm)+(Pf/dryVal_gcm3));
+      correctedText = (corrected_gcm3*df).toFixed(3);
+    } else if(dryVal!==null){
+      correctedText = dryVal.toFixed(3);
+    }
+    compactionRows.push(`<tr>
+      <td>${i+1}</td>
+      <td>${m2[i].value||'-'}</td>
+      <td>${getVal('moldEmptyWeight'+p)||'-'}</td>
+      <td>${(M1!==null && num(m2[i].value)!==null) ? (num(m2[i].value)-M1).toFixed(1) : '-'}</td>
+      <td>${wetdCells[i].textContent}</td>
+      <td>${moist2Cells[i].textContent}</td>
+      <td>${drydCells[i].textContent}</td>
+      <td>${correctedText}</td>
+    </tr>`);
+  }
+  document.getElementById(g('-compactionTableBody')).innerHTML = compactionRows.join('');
+
+  // Chart: reuse the live canvas snapshot (keeps the user's chosen style/theme)
+  try{
+    document.getElementById(g('-chartImg')).src = document.getElementById('proctorChart'+p).toDataURL('image/png');
+  } catch(e){
+    document.getElementById(g('-chartImg')).removeAttribute('src');
+  }
+
+  // KPIs
+  const maxPt = lastMaxPt[p];
+  document.getElementById(g('-kpiMdd')).textContent = maxPt ? maxPt.y.toFixed(3)+' '+dLabel : '--';
+  document.getElementById(g('-kpiOmc')).textContent = maxPt ? maxPt.x.toFixed(2)+' %' : '--';
+  document.getElementById(g('-kpiClass')).textContent = getVal('soilClassification'+p) || '--';
+
+  const reqPct = num(getVal('reqCompactionPct'+p)) || 95;
+  document.getElementById(g('-kpiCompaction')).textContent = reqPct + '% of MDD';
+
+  // Overall PASS/FAIL badge, based on the same spec logic as Template 2 (if minimum-compaction data available)
+  const minDryDensity = maxPt ? (maxPt.y*reqPct/100) : null;
+  let anyPass=false, anyFail=false;
+  for(let i=0;i<m2.length;i++){
+    const dryVal = num(drydCells[i].textContent);
+    let correctedVal = dryVal;
+    if(dryVal!==null && Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0){
+      const Pf = 100-Pc;
+      const dryVal_gcm3 = dryVal/df;
+      correctedVal = (100/((Pc/Gm)+(Pf/dryVal_gcm3)))*df;
+    }
+    if(correctedVal!==null && minDryDensity!==null){
+      if(correctedVal>=minDryDensity) anyPass=true; else anyFail=true;
+    }
+  }
+  const badge = document.getElementById(g('-badge'));
+  if(minDryDensity!==null && (anyPass || anyFail)){
+    badge.textContent = anyFail ? 'FAIL' : 'PASS';
+    badge.className = 't3-badge ' + (anyFail ? 'fail' : 'pass');
+  } else {
+    badge.textContent = 'TESTED';
+    badge.className = 't3-badge neutral';
+  }
+
+  document.getElementById(g('-remarks')).textContent = getVal('remarks'+p) || '-';
+  document.getElementById(g('-sign-tested')).textContent = getVal('techName'+p) || '-';
+  document.getElementById(g('-sign-checked')).textContent = getVal('checkedBy'+p) || '-';
+  document.getElementById(g('-sign-approved')).textContent = getVal('approvedBy'+p) || '-';
+  document.getElementById(g('-sign-date')).textContent = getVal('dateReported'+p) || getVal('testDate'+p) || '-';
+
+  document.getElementById('reportOverlayT3_'+p).style.display = 'block';
+  document.body.classList.add('report-mode');
+  window.scrollTo(0,0);
+}
+
+// Dedicated chart renderer for Report Template 4: classic black/white geotech style with
+// two curves - filled "Rock Corrected" points and hollow "Uncorrected" points - plus a
+// labeled ZAV (saturation) line and a peak annotation, matching classic lab report software.
+function renderTemplate4ChartImage(uncorrectedPts, correctedPts, maxUncorrected, maxCorrected, Gs){
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = 760; tmpCanvas.height = 420;
+  tmpCanvas.style.position = 'fixed';
+  tmpCanvas.style.left = '-9999px';
+  tmpCanvas.style.top = '-9999px';
+  document.body.appendChild(tmpCanvas);
+
+  const allPts = uncorrectedPts.concat(correctedPts);
+  const xVals = allPts.map(pt=>pt.x);
+  const yVals = allPts.map(pt=>pt.y);
+  const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
+  const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+  const xStep = niceStep(xMax-xMin || 1, 5);
+  const yStep = niceStep(yMax-yMin || 0.1, 5);
+  const xAxisMin = Math.max(0, Math.floor((xMin - xStep*0.6)/xStep)*xStep);
+  const xAxisMax = Math.ceil((xMax + xStep*0.6)/xStep)*xStep;
+  const yAxisMin = Math.floor((yMin - yStep*0.6)/yStep)*yStep;
+  const yAxisMax = Math.ceil((yMax + yStep*0.6)/yStep)*yStep;
+
+  let zavPts = [];
+  if(Gs && Gs>0){
+    for(let x=Math.max(0.01,xAxisMin); x<=xAxisMax; x+=(xAxisMax-xAxisMin)/60){
+      zavPts.push({x:x, y: 1/((x/100)+(1/Gs))});
+    }
+  }
+
+  const zavLabelPlugin = {
+    id:'t4ZavLabel',
+    afterDatasetsDraw(chart){
+      if(zavPts.length===0) return;
+      const {ctx, scales:{x:xs,y:ys}} = chart;
+      const mid = zavPts[Math.floor(zavPts.length*0.35)];
+      const px = xs.getPixelForValue(mid.x), py = ys.getPixelForValue(mid.y);
+      ctx.save();
+      ctx.font = 'italic bold 11px Georgia';
+      ctx.fillStyle = '#000';
+      ctx.translate(px, py);
+      ctx.rotate(-0.5);
+      ctx.fillText('ZAV SpG '+Gs.toFixed(2), 4, -4);
+      ctx.restore();
+    }
+  };
+
+  const peakLabelPlugin = {
+    id:'t4PeakLabel',
+    afterDatasetsDraw(chart){
+      if(!maxCorrected) return;
+      const {ctx, scales:{x:xs,y:ys}} = chart;
+      const px = xs.getPixelForValue(maxCorrected.x), py = ys.getPixelForValue(maxCorrected.y);
+      ctx.save();
+      ctx.font = 'bold 11px Georgia';
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${maxCorrected.x.toFixed(1)}%, ${maxCorrected.y.toFixed(3)}`, px+6, py-8);
+      ctx.restore();
+    }
+  };
+
+  const datasets = [
+    {
+      label:'Rock Corrected', data: correctedPts, type:'line',
+      borderColor:'#000', backgroundColor:'#000',
+      borderWidth:1.6, tension:0.35, cubicInterpolationMode:'monotone', fill:false,
+      pointRadius:5, pointBackgroundColor:'#000', pointBorderColor:'#000', pointBorderWidth:1,
+      order:1
+    },
+    {
+      label:'Uncorrected', data: uncorrectedPts, type:'line',
+      borderColor:'#000', backgroundColor:'#fff',
+      borderWidth:1.2, borderDash:[4,3], tension:0.35, cubicInterpolationMode:'monotone', fill:false,
+      pointRadius:5, pointBackgroundColor:'#fff', pointBorderColor:'#000', pointBorderWidth:1.4,
+      order:2
+    }
+  ];
+  if(zavPts.length>0){
+    datasets.push({
+      label:'ZAV', data: zavPts, type:'line',
+      borderColor:'#000', backgroundColor:'transparent',
+      borderWidth:1.2, borderDash:[2,3], pointRadius:0, tension:0, fill:false,
+      order:3
+    });
+  }
+
+  const tmpChart = new Chart(tmpCanvas.getContext('2d'), {
+    type:'scatter',
+    data:{ datasets },
+    plugins:[zavLabelPlugin, peakLabelPlugin],
+    options:{
+      responsive:false,
+      animation:false,
+      layout:{ padding:{ top:14, bottom:8, left:8, right:14 } },
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ type:'linear', min:xAxisMin, max:xAxisMax, ticks:{stepSize:xStep, font:{size:11, family:'Georgia'}, color:'#000'},
+            title:{display:true, text:'Water content, %', font:{family:'Georgia', weight:'bold', size:12}, color:'#000'},
+            grid:{color:'#ccc'} },
+        y:{ min:yAxisMin, max:yAxisMax, ticks:{stepSize:yStep, font:{size:11, family:'Georgia'}, color:'#000'},
+            title:{display:true, text:'Dry density, g/cm³', font:{family:'Georgia', weight:'bold', size:12}, color:'#000'},
+            grid:{color:'#ccc'} }
+      }
+    }
+  });
+
+  const dataUrl = tmpCanvas.toDataURL('image/png');
+  tmpChart.destroy();
+  document.body.removeChild(tmpCanvas);
+  return dataUrl;
+}
+
+function buildTemplate4ReportGeneric(p, idPrefix, astmDesignation){
+  const g = (suffix) => idPrefix + suffix;
+  const dLabel = densityUnitLabel(p);
+  const df = densityFactorOf(p);
+  const Gs = num(getVal('gsValue'+p));
+
+  document.getElementById(g('-curveNo')).textContent = getVal('sampleNo'+p) || getVal('reportNo'+p) || '1';
+
+  const procedureLetter = { A:'A', B:'B', C:'C' }[getVal('compactionMethod'+p) || 'A'] || 'A';
+  document.getElementById(g('-testSpecLine')).textContent =
+    `ASTM ${astmDesignation} Procedure ${procedureLetter}` +
+    (num(getVal('pcVal'+p))!==null ? ' — ASTM D4718 Oversize Correction Applied to Each Test Point' : '');
+
+  document.getElementById(g('-prepMethod')).textContent = getVal('samplePrep'+p) || '-';
+  document.getElementById(g('-hammerWt')).textContent = getVal('hammerWeight'+p) || '-';
+  document.getElementById(g('-hammerDrop')).textContent = getVal('dropHeight'+p) || '-';
+  document.getElementById(g('-numLayers')).textContent = getVal('numLayers'+p) || '-';
+  document.getElementById(g('-blows')).textContent = getVal('blowsPerLayer'+p) || '-';
+  const vol = num(getVal('moldVol'+p));
+  document.getElementById(g('-moldSize')).textContent = vol ? (vol/1000).toFixed(3)+' L ('+vol+' cm³)' : '-';
+  document.getElementById(g('-sieve')).textContent = getVal('sieveUsed'+p) || '-';
+  document.getElementById(g('-nmllpi')).textContent =
+    `${getVal('naturalMoisture'+p)||'-'} / ${getVal('liquidLimit'+p)||'-'} / ${getVal('plasticityIndex'+p)||'-'}`;
+  document.getElementById(g('-spg')).textContent = Gs ? Gs.toFixed(2) : '-';
+  document.getElementById(g('-gradation')).textContent =
+    `${getVal('percentRetained34in'+p)||'-'} / ${getVal('percentPassingNo200'+p)||'-'}`;
+  document.getElementById(g('-classification')).textContent =
+    `${getVal('soilClassification'+p)||'-'} / ${getVal('aashtoClass'+p)||'-'}`;
+  document.getElementById(g('-dateSampled')).textContent = getVal('dateReceived'+p) || '-';
+  document.getElementById(g('-dateTested')).textContent = getVal('testDate'+p) || '-';
+  document.getElementById(g('-testedBy')).textContent = getVal('techName'+p) || '-';
+
+  // Build both curves: uncorrected (raw dry density) and Rock Corrected (D4718 per-point correction)
+  const canTable = document.getElementById('canTable'+p);
+  const deterTable = document.getElementById('deterTable'+p);
+  const w1 = canTable.querySelectorAll('.w1');
+  const w2 = canTable.querySelectorAll('.w2');
+  const w3 = canTable.querySelectorAll('.w3');
+  const m2 = deterTable.querySelectorAll('.m2');
+  const wetdCells = deterTable.querySelectorAll('.wetd');
+  const moist2Cells = deterTable.querySelectorAll('.moist2');
+  const drydCells = deterTable.querySelectorAll('.dryd');
+  const M1 = num(getVal('moldEmptyWeight'+p));
+  const Pc = num(getVal('pcVal'+p));
+  const Gm = num(getVal('gmVal'+p));
+  const hasCorrection = (Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0);
+
+  let uncorrectedPts = [], correctedPts = [];
+  let dataRows = [];
+  for(let i=0;i<m2.length;i++){
+    const x = num(moist2Cells[i].textContent);
+    const yUncorr = num(drydCells[i].textContent);
+    if(x!==null && yUncorr!==null){
+      uncorrectedPts.push({x, y:yUncorr});
+      let yCorr = yUncorr;
+      if(hasCorrection){
+        const Pf = 100-Pc;
+        const yUncorr_gcm3 = yUncorr/df;
+        yCorr = (100/((Pc/Gm)+(Pf/yUncorr_gcm3)))*df;
+      }
+      correctedPts.push({x, y:yCorr});
+    }
+    dataRows.push({
+      wmws: m2[i].value || '-', wm: getVal('moldEmptyWeight'+p) || '-',
+      wwt: w1[i].value || '-', wdt: w2[i].value || '-', tare: w3[i].value || '-',
+      moisture: moist2Cells[i].textContent, dryDensity: drydCells[i].textContent
+    });
+  }
+  uncorrectedPts.sort((a,b)=>a.x-b.x);
+  correctedPts.sort((a,b)=>a.x-b.x);
+
+  function findPeak(pts){
+    if(pts.length>=3){
+      const c = quadFit(pts);
+      if(c){
+        const [a,b,cc] = c;
+        if(a<0){
+          const xv = -b/(2*a);
+          const xmin = Math.min(...pts.map(pt=>pt.x)), xmax = Math.max(...pts.map(pt=>pt.x));
+          if(xv>=xmin && xv<=xmax) return {x:xv, y:a*xv*xv+b*xv+cc};
+        }
+      }
+    }
+    return pts.length>0 ? pts.reduce((m,pt)=>pt.y>m.y?pt:m, pts[0]) : null;
+  }
+  const maxUncorrected = findPeak(uncorrectedPts);
+  const maxCorrected = hasCorrection ? findPeak(correctedPts) : maxUncorrected;
+
+  if(uncorrectedPts.length>0){
+    document.getElementById(g('-chartImg')).src = renderTemplate4ChartImage(uncorrectedPts, correctedPts, maxUncorrected, maxCorrected, Gs);
+  } else {
+    document.getElementById(g('-chartImg')).removeAttribute('src');
+  }
+
+  // Testing data table (row-per-field, column-per-trial, matching the classic layout)
+  const fieldRows = [
+    ['WM+WS', r=>r.wmws], ['WM', r=>r.wm], ['WW+T', r=>r.wwt], ['WD+T', r=>r.wdt],
+    ['TARE', r=>r.tare], ['MOISTURE, %', r=>r.moisture], ['DRY DENSITY, '+dLabel, r=>r.dryDensity]
+  ];
+  let tableHtml = '';
+  fieldRows.forEach(([label, getter])=>{
+    tableHtml += `<tr><td>${label}</td>` + dataRows.map(r=>`<td>${getter(r)}</td>`).join('') + '</tr>';
+  });
+  document.getElementById(g('-testingDataBody')).innerHTML = tableHtml;
+
+  document.getElementById(g('-correctedResults')).innerHTML = maxCorrected ? t2RowsHtml([
+    ['Max. Dry Density', maxCorrected.y.toFixed(3)+' '+dLabel],
+    ['Optimum Moisture', maxCorrected.x.toFixed(1)+' %']
+  ]) : t2RowsHtml([['Max. Dry Density','--'],['Optimum Moisture','--']]);
+
+  document.getElementById(g('-uncorrectedResults')).innerHTML = maxUncorrected ? t2RowsHtml([
+    ['Max. Dry Density', maxUncorrected.y.toFixed(3)+' '+dLabel],
+    ['Optimum Moisture', maxUncorrected.x.toFixed(1)+' %']
+  ]) : t2RowsHtml([['Max. Dry Density','--'],['Optimum Moisture','--']]);
+
+  document.getElementById(g('-materialDesc')).textContent = getVal('soilDescription'+p) || '-';
+  document.getElementById(g('-remarks')).textContent = getVal('remarks'+p) || '-';
+  document.getElementById(g('-projectNo')).textContent = getVal('reportNo'+p) || getVal('sampleNo'+p) || '-';
+  document.getElementById(g('-client')).textContent = getVal('clientName'+p) || '-';
+  document.getElementById(g('-project')).textContent = getVal('projectName'+p) || '-';
+  document.getElementById(g('-contract')).textContent = getVal('contractNo'+p) || '-';
+
+  document.getElementById('reportOverlayT4_'+p).style.display = 'block';
+  document.body.classList.add('report-mode');
+  window.scrollTo(0,0);
+}
+
+async function exportReportToExcel(p, testMethodLabel, energyLabel){
+  if(typeof ExcelJS === 'undefined'){
+    alert('تعذّر تحميل مكتبة تصدير Excel. تأكد من الاتصال بالإنترنت وحاول مرة أخرى.');
+    return;
+  }
+
+  const suggestedName = getVal('sampleNo'+p) || getVal('projectName'+p) || '';
+  const enteredName = prompt('اكتب اسم أو كود العينة لتسمية ملف الإكسيل:', suggestedName);
+  if(enteredName===null) return; // user cancelled
+
+  const NAVY = 'FF14213D';
+  const LIGHTBLUE = 'FFE6ECF5';
+  const LIGHTGRAY = 'FFF6F8FB';
+  const GREEN = 'FF1F8A5F';
+  const WHITE = 'FFFFFFFF';
+  const BORDER_COLOR = 'FFCCD6E4';
+  const thinBorder = {
+    top:{style:'thin', color:{argb:BORDER_COLOR}},
+    left:{style:'thin', color:{argb:BORDER_COLOR}},
+    bottom:{style:'thin', color:{argb:BORDER_COLOR}},
+    right:{style:'thin', color:{argb:BORDER_COLOR}}
+  };
+
+  const mLabel = massUnitLabel(p);
+  const dLabel = densityUnitLabel(p);
+  const maxPt = lastMaxPt[p];
+  const tmpl = getVal('reportTemplate'+p) || 'classic';
+  const includeSpec = (tmpl === 'template2' || tmpl === 'template3');
+  const includeT4 = (tmpl === 'template4');
+  const PASS_COLOR = 'FF1FB15C';
+  const FAIL_COLOR = 'FFE5484D';
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Proctor Report', { views:[{ rightToLeft:false }] });
+  ws.columns = [
+    {width:22},{width:14},{width:14},{width:14},
+    {width:20},{width:14},{width:14},{width:14},
+    {width:19},{width:14},{width:14}
+  ];
+  const FULL_SPAN = 11;
+
+  // Print setup: scale everything to fit on exactly one A4 page (landscape) when printed
+  ws.pageSetup = {
+    paperSize: 9, // A4
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 1,
+    horizontalCentered: true,
+    margins: { left:0.25, right:0.25, top:0.3, bottom:0.3, header:0.15, footer:0.15 }
+  };
+
+  let r = 1;
+
+  function sectionHeader(text, span){
+    ws.mergeCells(r,1,r,span||FULL_SPAN);
+    const cell = ws.getCell(r,1);
+    cell.value = text;
+    cell.font = {bold:true, size:11, color:{argb:WHITE}};
+    cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:NAVY}};
+    cell.alignment = {vertical:'middle', horizontal:'left'};
+    ws.getRow(r).height = 18;
+    r++;
+  }
+
+  function labelValueRow(label, value, fillArgb){
+    const c1 = ws.getCell(r,1);
+    c1.value = label;
+    c1.font = {bold:true, color:{argb:'FF14213D'}};
+    c1.border = thinBorder;
+    c1.alignment = {horizontal:'left', vertical:'middle'};
+    if(fillArgb) c1.fill = {type:'pattern', pattern:'solid', fgColor:{argb:fillArgb}};
+    ws.mergeCells(r,2,r,FULL_SPAN);
+    const c2 = ws.getCell(r,2);
+    c2.value = (value===0?'0':value) || '-';
+    c2.border = thinBorder;
+    c2.alignment = {horizontal:'left', vertical:'middle', wrapText:true};
+    if(fillArgb) c2.fill = {type:'pattern', pattern:'solid', fgColor:{argb:fillArgb}};
+    r++;
+  }
+
+  function tableHeaderRow(headers){
+    headers.forEach((h,idx)=>{
+      const cell = ws.getCell(r, idx+1);
+      cell.value = h;
+      cell.font = {bold:true, color:{argb:'FF14213D'}, size:9};
+      cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:LIGHTBLUE}};
+      cell.border = thinBorder;
+      cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
+    });
+    r++;
+  }
+
+  function tableDataRow(values, rowIndex, overrideFills){
+    values.forEach((v,idx)=>{
+      const cell = ws.getCell(r, idx+1);
+      cell.value = (v===0?'0':v) || '-';
+      cell.border = thinBorder;
+      cell.alignment = {horizontal:'center'};
+      if(overrideFills && overrideFills[idx]!==undefined){
+        cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:overrideFills[idx]}};
+        cell.font = {size:9, bold:true, color:{argb:'FFFFFFFF'}};
+      } else {
+        cell.font = {size:9};
+        if(rowIndex%2===1) cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:LIGHTGRAY}};
+      }
+    });
+    r++;
+  }
+
+  // A self-contained column "lane" for building side-by-side sections (like the printed report's grid)
+  function makeLane(labelCol, valueColStart, valueColEnd, startRow){
+    let rr = startRow;
+    return {
+      header(text){
+        ws.mergeCells(rr, labelCol, rr, valueColEnd);
+        const cell = ws.getCell(rr, labelCol);
+        cell.value = text;
+        cell.font = {bold:true, size:9.5, color:{argb:WHITE}};
+        cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:NAVY}};
+        cell.alignment = {vertical:'middle', horizontal:'left'};
+        ws.getRow(rr).height = 15;
+        rr++;
+      },
+      row(label, value, fillArgb){
+        const c1 = ws.getCell(rr, labelCol);
+        c1.value = label;
+        c1.font = {bold:true, size:8.5, color:{argb:'FF14213D'}};
+        c1.border = thinBorder;
+        c1.alignment = {horizontal:'left', vertical:'middle', wrapText:true};
+        if(fillArgb) c1.fill = {type:'pattern', pattern:'solid', fgColor:{argb:fillArgb}};
+        if(valueColEnd>valueColStart) ws.mergeCells(rr, valueColStart, rr, valueColEnd);
+        const c2 = ws.getCell(rr, valueColStart);
+        c2.value = (value===0?'0':value) || '-';
+        c2.font = {size:8.5};
+        c2.border = thinBorder;
+        c2.alignment = {horizontal:'left', vertical:'middle', wrapText:true};
+        if(fillArgb) c2.fill = {type:'pattern', pattern:'solid', fgColor:{argb:fillArgb}};
+        rr++;
+      },
+      blank(){ rr++; },
+      end(){ return rr; }
+    };
+  }
+
+  // ---- Title ----
+  const titleText = testMethodLabel.indexOf('D1557')>-1 ? 'MODIFIED PROCTOR TEST REPORT' : 'STANDARD PROCTOR TEST REPORT';
+  ws.mergeCells(r,1,r,FULL_SPAN);
+  ws.getCell(r,1).value = titleText;
+  ws.getCell(r,1).font = {bold:true, size:16, color:{argb:'FF14213D'}};
+  ws.getCell(r,1).alignment = {horizontal:'center'};
+  ws.getRow(r).height = 24;
+  r++;
+  ws.mergeCells(r,1,r,FULL_SPAN);
+  ws.getCell(r,1).value = testMethodLabel;
+  ws.getCell(r,1).font = {bold:true, size:11, color:{argb:'FF1D4E89'}};
+  ws.getCell(r,1).alignment = {horizontal:'center'};
+  r += 2;
+
+  // ---- Side-by-side grid: Project Info | Test Info | (Header info + Environmental + Dates) ----
+  const gridStartRow = r;
+  const projLane = makeLane(1, 2, 3, gridStartRow);
+  const testLane = makeLane(5, 6, 7, gridStartRow);
+  const sideLane = makeLane(9, 10, 11, gridStartRow);
+
+  projLane.header('PROJECT INFORMATION');
+  [
+    ['Project Name', getVal('projectName'+p)],
+    ['Contract No.', getVal('contractNo'+p)],
+    ['Client', getVal('clientName'+p)],
+    ['Consultant', getVal('consultantName'+p)],
+    ['Contractor', getVal('contractorName'+p)],
+    ['Project Location', getVal('projectLocation'+p)],
+    ['Sample ID', getVal('sampleNo'+p)],
+    ['Borehole / Test Pit No.', getVal('boreholeNo'+p)],
+    ['Soil Description', getVal('soilDescription'+p)],
+    ['Chainage', getVal('chainage'+p)]
+  ].forEach(([l,v])=>projLane.row(l,v));
+
+  testLane.header('TEST INFORMATION');
+  [
+    ['Test Method', testMethodLabel],
+    ['Mold Volume', getVal('moldVol'+p) ? getVal('moldVol'+p)+' cm³' : ''],
+    ['Mold Diameter', getVal('moldDiameter'+p)],
+    ['Mold Height', getVal('moldHeight'+p)],
+    ['Hammer Weight', getVal('hammerWeight'+p)],
+    ['Drop Height', getVal('dropHeight'+p)],
+    ['Number of Layers', getVal('numLayers'+p)],
+    ['Blows per Layer', getVal('blowsPerLayer'+p)],
+    ['Compaction Energy', energyLabel],
+    ['Sieve Used', getVal('sieveUsed'+p)]
+  ].forEach(([l,v])=>testLane.row(l,v));
+
+  sideLane.row('Report No.', getVal('reportNo'+p));
+  sideLane.row('Lab Reference No.', getVal('labRefNo'+p));
+  sideLane.row('Page', getVal('pageNo'+p));
+  sideLane.blank();
+  sideLane.header('ENVIRONMENTAL CONDITIONS');
+  [
+    ['Weather', getVal('weather'+p)],
+    ['Ambient Temperature', getVal('ambientTemp'+p) ? getVal('ambientTemp'+p)+' °C' : ''],
+    ['Relative Humidity', getVal('relativeHumidity'+p) ? getVal('relativeHumidity'+p)+' %' : ''],
+    ['Wind Condition', getVal('windCondition'+p)]
+  ].forEach(([l,v])=>sideLane.row(l,v));
+  sideLane.blank();
+  sideLane.header('DATES & PERSONNEL');
+  [
+    ['Date Received', getVal('dateReceived'+p)],
+    ['Date Tested', getVal('testDate'+p)],
+    ['Date Reported', getVal('dateReported'+p)],
+    ['Tested By', getVal('techName'+p)],
+    ['Checked By', getVal('checkedBy'+p)],
+    ['Approved By', getVal('approvedBy'+p)]
+  ].forEach(([l,v])=>sideLane.row(l,v));
+
+  r = Math.max(projLane.end(), testLane.end(), sideLane.end()) + 1;
+
+
+  // ---- Results Summary ----
+  sectionHeader('RESULTS SUMMARY');
+  const mddText = maxPt ? maxPt.y.toFixed(3)+' '+dLabel : '--';
+  const omcText = maxPt ? maxPt.x.toFixed(2)+' %' : '--';
+  [
+    ['Maximum Dry Density (MDD)', mddText],
+    ['Optimum Moisture Content (OMC)', omcText],
+    ['Soil Classification (USCS)', getVal('soilClassification'+p)],
+    ['Remarks', getVal('remarks'+p)]
+  ].forEach(([l,v])=>labelValueRow(l,v,'FFF4F8F2'));
+
+  const reqPct = num(getVal('reqCompactionPct'+p)) || 95;
+  const specMoistMin = num(getVal('specMoistMin'+p));
+  const specMoistMax = num(getVal('specMoistMax'+p));
+  const minDryDensityGlobal = maxPt ? (maxPt.y*reqPct/100) : null;
+
+  if(includeSpec){
+    const c1 = ws.getCell(r,1);
+    c1.value = 'Status';
+    c1.font = {bold:true, color:{argb:'FF14213D'}};
+    c1.border = thinBorder;
+    c1.alignment = {horizontal:'left', vertical:'middle'};
+    ws.mergeCells(r,2,r,FULL_SPAN);
+    const c2 = ws.getCell(r,2);
+    c2.value = minDryDensityGlobal!==null ? `Required Compaction: ${reqPct}% of MDD` : 'No specification limits provided';
+    c2.border = thinBorder;
+    c2.alignment = {horizontal:'left', vertical:'middle'};
+    r++;
+  }
+
+  // ---- Template 4 extras: Rock Corrected vs Uncorrected + Soil Index Properties ----
+  let maxUncorrectedT4 = null, maxCorrectedT4 = null;
+  let uncorrPtsT4 = [], corrPtsT4 = [];
+  if(includeT4){
+    const canTableT4 = document.getElementById('canTable'+p);
+    const deterTableT4 = document.getElementById('deterTable'+p);
+    const m2T4 = deterTableT4.querySelectorAll('.m2');
+    const moist2CellsT4 = deterTableT4.querySelectorAll('.moist2');
+    const drydCellsT4 = deterTableT4.querySelectorAll('.dryd');
+    const PcT4 = num(getVal('pcVal'+p));
+    const GmT4 = num(getVal('gmVal'+p));
+    const hasCorrT4 = (PcT4!==null && GmT4!==null && PcT4>=0 && PcT4<100 && GmT4>0);
+    const dfT4 = densityFactorOf(p);
+    for(let i=0;i<m2T4.length;i++){
+      const x = num(moist2CellsT4[i].textContent);
+      const yU = num(drydCellsT4[i].textContent);
+      if(x!==null && yU!==null){
+        uncorrPtsT4.push({x,y:yU});
+        let yC = yU;
+        if(hasCorrT4){
+          const Pf = 100-PcT4;
+          const yU_gcm3 = yU/dfT4;
+          yC = (100/((PcT4/GmT4)+(Pf/yU_gcm3)))*dfT4;
+        }
+        corrPtsT4.push({x,y:yC});
+      }
+    }
+    uncorrPtsT4.sort((a,b)=>a.x-b.x); corrPtsT4.sort((a,b)=>a.x-b.x);
+    function findPeakT4(pts){
+      if(pts.length>=3){
+        const c = quadFit(pts);
+        if(c){
+          const [a,bb,cc] = c;
+          if(a<0){
+            const xv=-bb/(2*a);
+            const xmin=Math.min(...pts.map(pt=>pt.x)), xmax=Math.max(...pts.map(pt=>pt.x));
+            if(xv>=xmin && xv<=xmax) return {x:xv, y:a*xv*xv+bb*xv+cc};
+          }
+        }
+      }
+      return pts.length>0 ? pts.reduce((m,pt)=>pt.y>m.y?pt:m, pts[0]) : null;
+    }
+    maxUncorrectedT4 = findPeakT4(uncorrPtsT4);
+    maxCorrectedT4 = hasCorrT4 ? findPeakT4(corrPtsT4) : maxUncorrectedT4;
+
+    sectionHeader('ROCK CORRECTED vs UNCORRECTED RESULTS');
+    [
+      ['Rock Corrected — Max Dry Density', maxCorrectedT4 ? maxCorrectedT4.y.toFixed(3)+' '+dLabel : '--'],
+      ['Rock Corrected — Optimum Moisture', maxCorrectedT4 ? maxCorrectedT4.x.toFixed(1)+' %' : '--'],
+      ['Uncorrected — Max Dry Density', maxUncorrectedT4 ? maxUncorrectedT4.y.toFixed(3)+' '+dLabel : '--'],
+      ['Uncorrected — Optimum Moisture', maxUncorrectedT4 ? maxUncorrectedT4.x.toFixed(1)+' %' : '--']
+    ].forEach(([l,v])=>labelValueRow(l,v,'FFEFF3F8'));
+    r++;
+
+    sectionHeader('SOIL INDEX PROPERTIES');
+    [
+      ['Natural Moisture (NM)', getVal('naturalMoisture'+p)],
+      ['Liquid Limit (LL)', getVal('liquidLimit'+p)],
+      ['Plasticity Index (PI)', getVal('plasticityIndex'+p)],
+      ['Specific Gravity (Sp.G. — ASTM D854)', getVal('gsValue'+p)],
+      ['% Retained on 3/4 in.', getVal('percentRetained34in'+p)],
+      ['% Passing No. 200', getVal('percentPassingNo200'+p)],
+      ['AASHTO Classification', getVal('aashtoClass'+p)]
+    ].forEach(([l,v])=>labelValueRow(l,v));
+    r++;
+  }
+  r++;
+
+  // ---- Moisture Content Table ----
+  sectionHeader('MOISTURE CONTENT TABLE (5 TRIALS)');
+  const moistureHeaders = ['Trial', `Wet Soil + Can (${mLabel})`, `Dry Soil + Can (${mLabel})`, `Can Weight (${mLabel})`,
+    `Water Weight (${mLabel})`, `Dry Soil Weight (${mLabel})`, 'Moisture Content (%)'];
+  if(includeSpec) moistureHeaders.push('Min. (%)', 'Max. (%)', 'Pass / Fail');
+  tableHeaderRow(moistureHeaders);
+  const canTable = document.getElementById('canTable'+p);
+  const w1 = canTable.querySelectorAll('.w1');
+  const w2 = canTable.querySelectorAll('.w2');
+  const w3 = canTable.querySelectorAll('.w3');
+  const wwCells = canTable.querySelectorAll('.ww');
+  const wdCells = canTable.querySelectorAll('.wd');
+  const moistCells = canTable.querySelectorAll('.moist');
+  for(let i=0;i<w1.length;i++){
+    const rowVals = [i+1, w1[i].value, w2[i].value, w3[i].value, wwCells[i].textContent, wdCells[i].textContent, moistCells[i].textContent];
+    let overrideFills;
+    if(includeSpec){
+      const moistVal = num(moistCells[i].textContent);
+      let pf = '-';
+      if(specMoistMin!==null && specMoistMax!==null && moistVal!==null){
+        const ok = moistVal>=specMoistMin && moistVal<=specMoistMax;
+        pf = ok ? 'PASS' : 'FAIL';
+        overrideFills = {9: ok ? PASS_COLOR : FAIL_COLOR};
+      }
+      rowVals.push(specMoistMin!==null?specMoistMin.toFixed(1):'-', specMoistMax!==null?specMoistMax.toFixed(1):'-', pf);
+    }
+    tableDataRow(rowVals, i, overrideFills);
+  }
+  r++;
+
+  // ---- Compaction Results Table ----
+  sectionHeader('COMPACTION RESULTS TABLE');
+  const compactionHeaders = ['Trial', `Mold + Soil Weight (${mLabel})`, `Mold Weight (${mLabel})`, `Wet Soil Weight (${mLabel})`,
+    `Wet Density (${dLabel})`, 'Moisture Content (%)', `Dry Density (${dLabel})`, `Corrected Dry Density (${dLabel})`];
+  if(includeSpec) compactionHeaders.push(`Min. Dry Density (${dLabel})`, 'Pass / Fail');
+  tableHeaderRow(compactionHeaders);
+  const deterTable = document.getElementById('deterTable'+p);
+  const m2 = deterTable.querySelectorAll('.m2');
+  const wetdCells = deterTable.querySelectorAll('.wetd');
+  const moist2Cells = deterTable.querySelectorAll('.moist2');
+  const drydCells = deterTable.querySelectorAll('.dryd');
+  const M1 = num(getVal('moldEmptyWeight'+p));
+  const Pc = num(getVal('pcVal'+p));
+  const Gm = num(getVal('gmVal'+p));
+  const df = densityFactorOf(p);
+  for(let i=0;i<m2.length;i++){
+    const dryVal = num(drydCells[i].textContent);
+    let correctedVal = dryVal;
+    let correctedText = '-';
+    if(dryVal!==null && Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0){
+      const Pf = 100 - Pc;
+      const dryVal_gcm3 = dryVal / df;
+      const corrected_gcm3 = 100 / ( (Pc/Gm) + (Pf/dryVal_gcm3) );
+      correctedVal = corrected_gcm3*df;
+      correctedText = correctedVal.toFixed(3);
+    } else if(dryVal!==null){
+      correctedText = dryVal.toFixed(3);
+    }
+    const rowVals = [
+      i+1, m2[i].value, getVal('moldEmptyWeight'+p),
+      (M1!==null && num(m2[i].value)!==null) ? (num(m2[i].value)-M1).toFixed(1) : '-',
+      wetdCells[i].textContent, moist2Cells[i].textContent, drydCells[i].textContent, correctedText
+    ];
+    let overrideFills;
+    if(includeSpec){
+      let pf = '-';
+      if(correctedVal!==null && minDryDensityGlobal!==null){
+        const ok = correctedVal >= minDryDensityGlobal;
+        pf = ok ? 'PASS' : 'FAIL';
+        overrideFills = {9: ok ? PASS_COLOR : FAIL_COLOR};
+      }
+      rowVals.push(minDryDensityGlobal!==null?minDryDensityGlobal.toFixed(3):'-', pf);
+    }
+    tableDataRow(rowVals, i, overrideFills);
+  }
+  r++;
+
+  // ---- Proctor Curve (embedded chart image) ----
+  sectionHeader(includeT4 ? 'COMPACTION CURVE (Rock Corrected vs Uncorrected)' : 'PROCTOR CURVE');
+  const chartRowStart = r;
+  try{
+    let imgBase64;
+    if(includeT4){
+      const GsT4 = num(getVal('gsValue'+p));
+      const dataUrl = renderTemplate4ChartImage(uncorrPtsT4, corrPtsT4, maxUncorrectedT4, maxCorrectedT4, GsT4);
+      imgBase64 = dataUrl.split(',')[1];
+    } else {
+      const canvas = document.getElementById('proctorChart'+p);
+      imgBase64 = canvas.toDataURL('image/png').split(',')[1];
+    }
+    const imgId = wb.addImage({ base64: imgBase64, extension:'png' });
+    ws.addImage(imgId, { tl:{col:0, row:r-1}, ext:{width:560, height:300} });
+  } catch(e){ /* chart not available yet */ }
+  r += 16; // reserve vertical space for the embedded chart image
+
+  // ---- Notes / Signatures ----
+  labelValueRow('Notes / Remarks', getVal('remarks'+p));
+  r++;
+  ['Tested By','Checked By','Approved By'].forEach((role, idx)=>{
+    const names = [getVal('techName'+p), getVal('checkedBy'+p), getVal('approvedBy'+p)];
+    labelValueRow(role, names[idx]);
+  });
+  labelValueRow('Date', getVal('dateReported'+p) || getVal('testDate'+p));
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const testLabel = (p==='698') ? 'D698' : 'D1557';
+  const sampleTag = (enteredName || 'proctor').toString().trim().replace(/[^a-zA-Z0-9_\u0600-\u06FF-]+/g,'_') || 'proctor';
+  a.href = url;
+  a.download = `Proctor_Report_${testLabel}_${sampleTag}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+let locked = {'1557':false, '698':false};
+
+function toggleLock(p){
+  locked[p] = !locked[p];
+  const panel = document.getElementById('panel-'+p);
+  panel.querySelectorAll('input, select, textarea').forEach(el=>{
+    el.disabled = locked[p];
+  });
+  const btn = document.getElementById('lockBtn'+p);
+  const isEn = (typeof currentLang!=='undefined' && currentLang==='en');
+  if(locked[p]){
+    btn.textContent = isEn ? '🔓 Unlock Data' : '🔓 فتح القفل';
+    btn.style.background = '#c0392b';
+  } else {
+    btn.textContent = isEn ? '🔒 Lock Entered Data' : '🔒 قفل البيانات المدخلة';
+    btn.style.background = '';
+  }
+}
+
+window.addEventListener('scroll', function(){
+  const btn = document.getElementById('scrollTopBtn');
+  if(!btn) return;
+  btn.style.display = (window.scrollY > 300) ? 'block' : 'none';
+});
+
+window.onload = function(){ calcAll('1557'); calcAll('698'); };
+</script>
+</body>
+</html>
