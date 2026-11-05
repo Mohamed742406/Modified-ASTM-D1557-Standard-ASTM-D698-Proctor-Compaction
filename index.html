@@ -641,7 +641,7 @@
       <tr><th>نسبة الحبيبات الخشنة المحجوزة على المنخل Pc (%)</th>
         <td><input type="number" step="0.1" class="cell" id="pcVal1557" oninput="calcAll('1557')"></td>
       </tr>
-      <tr><th>الوزن النوعي الظاهري المشبع سطحياً للحبيبات الخشنة Gm (SSD)</th>
+      <tr><th>الوزن النوعي الظاهري الجاف (OD) للحبيبات الخشنة Gm (OD)</th>
         <td><input type="number" step="0.01" class="cell" id="gmVal1557" oninput="calcAll('1557')"></td>
       </tr>
       <tr><th>المحتوى الرطوبي الفعلي للحبيبات الخشنة ωc (%)</th>
@@ -1022,7 +1022,7 @@
       <tr><th>نسبة الحبيبات الخشنة المحجوزة على المنخل Pc (%)</th>
         <td><input type="number" step="0.1" class="cell" id="pcVal698" oninput="calcAll('698')"></td>
       </tr>
-      <tr><th>الوزن النوعي الظاهري المشبع سطحياً للحبيبات الخشنة Gm (SSD)</th>
+      <tr><th>الوزن النوعي الظاهري الجاف (OD) للحبيبات الخشنة Gm (OD)</th>
         <td><input type="number" step="0.01" class="cell" id="gmVal698" oninput="calcAll('698')"></td>
       </tr>
       <tr><th>المحتوى الرطوبي الفعلي للحبيبات الخشنة ωc (%)</th>
@@ -1925,7 +1925,7 @@ const AR_TO_EN = {
   "تقرير النمط الثاني (مواصفات وفحص حدود)": "Template 2 (Spec & Limit Check)",
   "تقرير النمط الثالث (لوحة قيادة عصرية)": "Template 3 (Modern Dashboard)",
   "نسبة الحبيبات الخشنة المحجوزة على المنخل Pc (%)": "Oversize (Coarse) Fraction Pc (%)",
-  "الوزن النوعي الظاهري المشبع سطحياً للحبيبات الخشنة Gm (SSD)": "Bulk SSD Specific Gravity of Coarse Particles Gm",
+  "الوزن النوعي الظاهري الجاف (OD) للحبيبات الخشنة Gm (OD)": "Bulk Specific Gravity (OD) of Coarse Particles Gm (OD)",
   "المحتوى الرطوبي الفعلي للحبيبات الخشنة ωc (%)": "Actual Moisture Content of Coarse Particles ωc (%)",
   "نسبة الحبيبات الناعمة Pf (%)": "Fine Fraction Pf (%)",
   "وزن العلبة + تربة رطبة (g)": "Wet Soil + Can (g)",
@@ -2264,31 +2264,22 @@ function updateChart(points, p){
 
   // find the peak (max dry density / OMC) using a quadratic fit purely for the
   // result box numbers - it is NOT drawn as a separate curve anymore
-  let maxPt = null;
-  if(points.length>=3){
-    const coeffs = quadFit(points);
-    if(coeffs){
-      const [a,b,c] = coeffs;
-      if(a<0){
-        const xv = -b/(2*a);
-        const xmin = Math.min(...points.map(pt=>pt.x));
-        const xmax = Math.max(...points.map(pt=>pt.x));
-        if(xv>=xmin && xv<=xmax){
-          maxPt = {x:xv, y:a*xv*xv+b*xv+c};
-        }
-      }
-    }
-  }
-  if(!maxPt && points.length>0){
-    maxPt = points.reduce((m,pt)=> pt.y>m.y?pt:m, points[0]);
-  }
+  const maxPt = findProctorPeak(points);
   lastMaxPt[p] = maxPt;
 
   // compute nice axis bounds so the grid looks clean and labels don't collide
-  const xMinData = Math.min(...points.map(pt=>pt.x));
-  const xMaxData = Math.max(...points.map(pt=>pt.x));
-  const yMinData = Math.min(...points.map(pt=>pt.y));
-  const yMaxData = Math.max(...points.map(pt=>pt.y));
+  // (corrected D4718 points are included so the shifted curve never falls outside the plot)
+  const boundPts = points.slice();
+  {
+    const _Pc = num(getVal('pcVal'+p)), _Gm = num(getVal('gmVal'+p)), _wc = num(getVal('wcVal'+p));
+    if(_Pc!==null && _Gm!==null && _Pc>=0 && _Pc<100 && _Gm>0){
+      points.forEach(pt=> boundPts.push(d4718CorrectPoint(pt.x, pt.y, _Pc, _Gm, _wc, densityFactorOf(p))));
+    }
+  }
+  const xMinData = Math.min(...boundPts.map(pt=>pt.x));
+  const xMaxData = Math.max(...boundPts.map(pt=>pt.x));
+  const yMinData = Math.min(...boundPts.map(pt=>pt.y));
+  const yMaxData = Math.max(...boundPts.map(pt=>pt.y));
 
   const xStep = niceStep(xMaxData-xMinData || 1, 5);
   const yStep = niceStep(yMaxData-yMinData || 0.1, 5);
@@ -2318,14 +2309,13 @@ function updateChart(points, p){
   const hasChartCorrection = (PcChart!==null && GmChart!==null && PcChart>=0 && PcChart<100 && GmChart>0);
   let correctedPts = [];
   if(hasChartCorrection){
-    const PfChart = 100 - PcChart;
+    const wcChart = num(getVal('wcVal'+p));
     points.forEach(pt=>{
-      const y_gcm3 = pt.y / df;
-      const yCorr_gcm3 = 100 / ( (PcChart/GmChart) + (PfChart/y_gcm3) );
-      const yCorr = yCorr_gcm3 * df;
-      correctedPts.push({x:pt.x, y:yCorr});
-      if(yCorr > yAxisMaxFinal) yAxisMaxFinal = Math.ceil(yCorr/yStep)*yStep;
+      const c = d4718CorrectPoint(pt.x, pt.y, PcChart, GmChart, wcChart, df);
+      correctedPts.push(c);
+      if(c.y > yAxisMaxFinal) yAxisMaxFinal = Math.ceil(c.y/yStep)*yStep;
     });
+    correctedPts.sort((a,b)=>a.x-b.x);
   }
 
   // Chart style selection: smooth curve (monotone), straight line segments, or filled area
@@ -2497,8 +2487,54 @@ function updateChart(points, p){
 }
 
 // ASTM D4718 correction for oversize (coarse) particles removed from the compaction mold.
-// gammaD  = 100 / ( Pc/Gm + Pf/gamma_d )      [gamma_w = 1 g/cm3, Gm = bulk SG (SSD) of coarse particles]
+// gammaD  = 100 / ( Pc/Gm + Pf/gamma_d )      [gamma_w = 1 g/cm3, Gm = bulk SG (OD) of coarse particles]
 // omegaD  = ( Pc*omega_c + Pf*omega_f ) / 100
+// Peak of a Proctor curve: local quadratic fit around the highest measured point (up to 5 points),
+// so the reported MDD is never lower than the highest measured point and is not dragged down by
+// the far wet/dry ends of the curve. Falls back to the highest measured point if the fit is unusable.
+function findProctorPeak(pts){
+  if(!pts || pts.length===0) return null;
+  const s = pts.slice().sort((a,b)=>a.x-b.x);
+  let iMax = 0;
+  s.forEach((pt,i)=>{ if(pt.y > s[iMax].y) iMax = i; });
+  const best = {x:s[iMax].x, y:s[iMax].y};
+  if(s.length < 3) return best;
+  const lo = Math.max(0, iMax-2), hi = Math.min(s.length-1, iMax+2);
+  const win = s.slice(lo, hi+1);
+  const c = quadFit(win);
+  if(c){
+    const [a,b,cc] = c;
+    if(a < 0){
+      const xv = -b/(2*a);
+      const yv = a*xv*xv + b*xv + cc;
+      if(xv >= win[0].x && xv <= win[win.length-1].x && yv >= best.y) return {x:xv, y:yv};
+    }
+  }
+  return best;
+}
+
+// Peak used in reports / spec checks: D4718-corrected when Pc, Gm are entered, else uncorrected.
+function getReportPeak(p){
+  const mp = lastMaxPt[p];
+  if(!mp) return null;
+  const Pc = num(getVal('pcVal'+p)), Gm = num(getVal('gmVal'+p)), wc = num(getVal('wcVal'+p));
+  if(Pc!==null && Gm!==null && Pc>=0 && Pc<100 && Gm>0){
+    return d4718CorrectPoint(mp.x, mp.y, Pc, Gm, wc, densityFactorOf(p));
+  }
+  return mp;
+}
+
+// Per-point D4718 correction (density AND moisture). Gm = bulk specific gravity (OD) of the coarse fraction.
+//   gamma_corr = 100 / ( Pc/Gm + Pf/gamma_fine )        (gamma_w = 1 g/cm3)
+//   w_corr     = ( Pc*wc + Pf*w_fine ) / 100            (x-axis shifts too)
+function d4718CorrectPoint(x, yDisp, Pc, Gm, wc, df){
+  const Pf = 100 - Pc;
+  const y_gcm3 = yDisp / df;
+  const yC = (100 / ((Pc/Gm) + (Pf/y_gcm3))) * df;
+  const xC = (wc!==null && wc!==undefined) ? (Pc*wc + Pf*x)/100 : x;
+  return {x:xC, y:yC};
+}
+
 function updateD4718Correction(maxPt, p){
   const box = document.getElementById('resultBoxCorrected'+p);
   const pfCell = document.getElementById('pfVal'+p);
@@ -2762,7 +2798,7 @@ function buildReportGeneric(p, idPrefix, testMethodLabel, energyLabel){
     ['Sieve Used', getVal('sieveUsed'+p)]
   ]);
 
-  const maxPt = lastMaxPt[p];
+  const maxPt = getReportPeak(p);
   const mddText = maxPt ? maxPt.y.toFixed(3)+' '+dLabel : '--';
   const omcText = maxPt ? maxPt.x.toFixed(2)+' %' : '--';
   document.getElementById(g('-resultsInfo')).innerHTML = rowsHtml([
@@ -3163,7 +3199,7 @@ function buildTemplate2ReportGeneric(p, idPrefix, testMethodLabel, energyLabel){
   const Pc = num(getVal('pcVal'+p));
   const Gm = num(getVal('gmVal'+p));
   const reqPct = num(getVal('reqCompactionPct'+p)) || 95;
-  const maxPt = lastMaxPt[p];
+  const maxPt = getReportPeak(p);
   const minDryDensity = maxPt ? (maxPt.y*reqPct/100) : null;
 
   let compactionRows = [];
@@ -3211,10 +3247,7 @@ function buildTemplate2ReportGeneric(p, idPrefix, testMethodLabel, energyLabel){
     if(x!==null && y!==null){
       points.push({x,y});
       if(hasCorrT2){
-        const Pf = 100-Pc;
-        const y_gcm3 = y/df;
-        const yCorr = (100/((Pc/Gm)+(Pf/y_gcm3)))*df;
-        correctedPtsT2.push({x, y:yCorr});
+        correctedPtsT2.push(d4718CorrectPoint(x, y, Pc, Gm, num(getVal('wcVal'+p)), df));
       }
     }
   }
@@ -3357,7 +3390,7 @@ function buildTemplate3ReportGeneric(p, idPrefix, energyLabel){
   }
 
   // KPIs
-  const maxPt = lastMaxPt[p];
+  const maxPt = getReportPeak(p);
   document.getElementById(g('-kpiMdd')).textContent = maxPt ? maxPt.y.toFixed(3)+' '+dLabel : '--';
   document.getElementById(g('-kpiOmc')).textContent = maxPt ? maxPt.x.toFixed(2)+' %' : '--';
   document.getElementById(g('-kpiClass')).textContent = getVal('soilClassification'+p) || '--';
@@ -3567,13 +3600,11 @@ function buildTemplate4ReportGeneric(p, idPrefix, astmDesignation){
     const yUncorr = num(drydCells[i].textContent);
     if(x!==null && yUncorr!==null){
       uncorrectedPts.push({x, y:yUncorr});
-      let yCorr = yUncorr;
       if(hasCorrection){
-        const Pf = 100-Pc;
-        const yUncorr_gcm3 = yUncorr/df;
-        yCorr = (100/((Pc/Gm)+(Pf/yUncorr_gcm3)))*df;
+        correctedPts.push(d4718CorrectPoint(x, yUncorr, Pc, Gm, num(getVal('wcVal'+p)), df));
+      } else {
+        correctedPts.push({x, y:yUncorr});
       }
-      correctedPts.push({x, y:yCorr});
     }
     dataRows.push({
       wmws: m2[i].value || '-', wm: getVal('moldEmptyWeight'+p) || '-',
@@ -3584,20 +3615,7 @@ function buildTemplate4ReportGeneric(p, idPrefix, astmDesignation){
   uncorrectedPts.sort((a,b)=>a.x-b.x);
   correctedPts.sort((a,b)=>a.x-b.x);
 
-  function findPeak(pts){
-    if(pts.length>=3){
-      const c = quadFit(pts);
-      if(c){
-        const [a,b,cc] = c;
-        if(a<0){
-          const xv = -b/(2*a);
-          const xmin = Math.min(...pts.map(pt=>pt.x)), xmax = Math.max(...pts.map(pt=>pt.x));
-          if(xv>=xmin && xv<=xmax) return {x:xv, y:a*xv*xv+b*xv+cc};
-        }
-      }
-    }
-    return pts.length>0 ? pts.reduce((m,pt)=>pt.y>m.y?pt:m, pts[0]) : null;
-  }
+  function findPeak(pts){ return findProctorPeak(pts); }
   const maxUncorrected = findPeak(uncorrectedPts);
   const maxCorrected = hasCorrection ? findPeak(correctedPts) : maxUncorrected;
 
@@ -3665,7 +3683,7 @@ async function exportReportToExcel(p, testMethodLabel, energyLabel){
 
   const mLabel = massUnitLabel(p);
   const dLabel = densityUnitLabel(p);
-  const maxPt = lastMaxPt[p];
+  const maxPt = getReportPeak(p);
   const tmpl = getVal('reportTemplate'+p) || 'classic';
   const includeSpec = (tmpl === 'template2' || tmpl === 'template3');
   const includeT4 = (tmpl === 'template4');
@@ -3906,30 +3924,15 @@ async function exportReportToExcel(p, testMethodLabel, energyLabel){
       const yU = num(drydCellsT4[i].textContent);
       if(x!==null && yU!==null){
         uncorrPtsT4.push({x,y:yU});
-        let yC = yU;
         if(hasCorrT4){
-          const Pf = 100-PcT4;
-          const yU_gcm3 = yU/dfT4;
-          yC = (100/((PcT4/GmT4)+(Pf/yU_gcm3)))*dfT4;
+          corrPtsT4.push(d4718CorrectPoint(x, yU, PcT4, GmT4, num(getVal('wcVal'+p)), dfT4));
+        } else {
+          corrPtsT4.push({x,y:yU});
         }
-        corrPtsT4.push({x,y:yC});
       }
     }
     uncorrPtsT4.sort((a,b)=>a.x-b.x); corrPtsT4.sort((a,b)=>a.x-b.x);
-    function findPeakT4(pts){
-      if(pts.length>=3){
-        const c = quadFit(pts);
-        if(c){
-          const [a,bb,cc] = c;
-          if(a<0){
-            const xv=-bb/(2*a);
-            const xmin=Math.min(...pts.map(pt=>pt.x)), xmax=Math.max(...pts.map(pt=>pt.x));
-            if(xv>=xmin && xv<=xmax) return {x:xv, y:a*xv*xv+bb*xv+cc};
-          }
-        }
-      }
-      return pts.length>0 ? pts.reduce((m,pt)=>pt.y>m.y?pt:m, pts[0]) : null;
-    }
+    function findPeakT4(pts){ return findProctorPeak(pts); }
     maxUncorrectedT4 = findPeakT4(uncorrPtsT4);
     maxCorrectedT4 = hasCorrT4 ? findPeakT4(corrPtsT4) : maxUncorrectedT4;
 
